@@ -6,10 +6,12 @@ interface SeatSlotProps {
   seat: Seat;
   myPlayerId: string;
   stage: GameStage;
-  isActive: boolean; // 是否当前行动玩家
+  isActive: boolean;
   isDealer: boolean;
   isSmallBlind: boolean;
   isBigBlind: boolean;
+  /** 是否显示底牌（自己=单独大底牌区，座位上不重复显示） */
+  hideHoleCards?: boolean;
 }
 
 const ACTION_LABEL: Record<ActionType, string> = {
@@ -28,6 +30,7 @@ export function SeatSlot({
   isDealer,
   isSmallBlind,
   isBigBlind,
+  hideHoleCards = false,
 }: SeatSlotProps) {
   const p = seat.player;
 
@@ -42,8 +45,7 @@ export function SeatSlot({
 
   const isMe = p.id === myPlayerId;
   const isShowdown = stage === GameStage.Showdown || stage === GameStage.Settled;
-  // 底牌可见性：自己始终可见；对手仅在摊牌后可见；否则显示牌背
-  const showHoleCards = isMe || (isShowdown && !p.hasFolded);
+  const showHoleCards = (isMe || (isShowdown && !p.hasFolded)) && !hideHoleCards;
 
   const cardClass =
     'player-card ' +
@@ -53,16 +55,11 @@ export function SeatSlot({
 
   return (
     <div className="flex flex-col items-center gap-1">
-      {/* 底牌 */}
-      {p.holeCards && p.holeCards.length > 0 ? (
+      {/* 底牌（自己的不在座位显示，用单独大底牌区） */}
+      {showHoleCards && p.holeCards && p.holeCards.length > 0 ? (
         <div className="hole-cards-row">
-          {p.holeCards.map((c, i) => (
-            <PixelCard
-              key={c.id}
-              card={c}
-              revealed={showHoleCards}
-              size="sm"
-            />
+          {p.holeCards.map((c) => (
+            <PixelCard key={c.id} card={c} revealed={showHoleCards} size="sm" />
           ))}
         </div>
       ) : null}
@@ -70,7 +67,6 @@ export function SeatSlot({
       {/* 玩家信息卡 */}
       <div className={cardClass}>
         <div className="flex items-center gap-1">
-          {/* 盲注/庄家标识 */}
           {isDealer && <span className="dealer-btn" title="庄家">D</span>}
           {isSmallBlind && <span className="blind-tag" style={{ color: 'var(--neon-blue)' }}>SB</span>}
           {isBigBlind && <span className="blind-tag" style={{ color: 'var(--neon-red)' }}>BB</span>}
@@ -84,20 +80,17 @@ export function SeatSlot({
           {p.chips}
         </span>
 
-        {/* 当前轮下注 */}
         {p.betThisRound > 0 && (
           <span className="bet-chip">▲ {p.betThisRound}</span>
         )}
 
-        {/* 动作标签 */}
         {p.lastAction && (
-          <span className={'action-tag ' + (p.lastAction.type.replace(/-/g, ''))} style={{ color: actionColor(p.lastAction.type) }}>
+          <span className="action-tag" style={{ color: actionColor(p.lastAction.type) }}>
             {ACTION_LABEL[p.lastAction.type]}
             {p.lastAction.amount ? ' ' + p.lastAction.amount : ''}
           </span>
         )}
 
-        {/* 状态标记 */}
         {p.hasFolded && <span className="font-screen text-[9px] text-neon-red">弃牌</span>}
         {p.isAllIn && <span className="font-screen text-[9px] text-neon-pink blink">ALL IN</span>}
         {isActive && <span className="font-screen text-[9px] text-neon-yellow blink">▶ 行动中</span>}

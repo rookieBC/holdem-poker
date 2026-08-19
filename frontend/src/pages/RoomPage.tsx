@@ -97,15 +97,17 @@ export function RoomPage() {
       )}
 
       {/* 主区域 */}
-      <div className="flex-1 overflow-auto p-2 md:p-4 flex flex-col items-center gap-4">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {inGame && activeGameState ? (
-          /* 游戏进行中：牌桌占满主区域，操作面板浮动在底部 */
-          <div className="w-full flex-1 relative min-h-[480px]">
-            <PokerTable state={activeGameState} myPlayerId={account.id} />
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-2xl z-30 pb-2">
+          /* 游戏进行中：牌桌占满上方，操作面板在下方独立区域 */
+          <>
+            <div className="flex-1 relative min-h-[400px]">
+              <PokerTable state={activeGameState} myPlayerId={account.id} />
+            </div>
+            <div className="shrink-0 px-2 pb-2">
               <ActionPanel state={activeGameState} />
             </div>
-          </div>
+          </>
         ) : (
           <>
             {/* 未开局：座位选择 */}

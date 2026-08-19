@@ -9,16 +9,15 @@ interface PixelCardProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-// 增大尺寸，确保牌面清晰可读
+// 像素风卡牌：大尺寸 + 高对比黑白底 + 粗体数字
 const SIZE_MAP = {
-  sm: { w: 56, h: 80, fs: 13 },    // 座位旁底牌
-  md: { w: 76, h: 108, fs: 16 },   // 公共牌
-  lg: { w: 96, h: 136, fs: 20 },   // 大展示
+  sm: { w: 64, h: 90, fs: 15 },    // 座位底牌
+  md: { w: 80, h: 114, fs: 18 },   // 公共牌
+  lg: { w: 100, h: 142, fs: 22 },  // 大展示
 };
 
 export function PixelCard({ card, revealed = true, highlight = false, size = 'md' }: PixelCardProps) {
   const { w, h, fs } = SIZE_MAP[size];
-  const colorClass = card && isRedSuit(card.suit) ? 'text-neon-red' : 'text-bg-deep';
 
   return (
     <motion.div
@@ -36,40 +35,18 @@ export function PixelCard({ card, revealed = true, highlight = false, size = 'md
       >
         {/* 正面 */}
         <div
-          className="absolute inset-0 flex flex-col justify-between"
+          className="absolute inset-0 flex flex-col"
           style={{
             backfaceVisibility: 'hidden',
-            background: '#f0f0e8',
-            border: '2px solid #0a0a18',
-            borderRadius: 4,
+            background: '#f8f8f0',
+            border: '3px solid #0a0a18',
+            borderRadius: 5,
             boxShadow: highlight
-              ? `0 0 12px var(--neon-yellow), 0 0 24px var(--neon-yellow)`
-              : '2px 2px 0 #0a0a18',
-            padding: 3,
+              ? `0 0 14px var(--neon-yellow), 0 0 28px var(--neon-yellow)`
+              : '3px 3px 0 #0a0a18',
           }}
         >
-          {card && (
-            <>
-              {/* 左上角：点数 + 花色（竖排紧凑） */}
-              <div className={`flex flex-col items-center leading-none ${colorClass}`} style={{ fontSize: fs }}>
-                <span className="font-screen font-bold">{card.rank}</span>
-                <span style={{ fontSize: fs * 0.85, lineHeight: 1 }}>{SUIT_SYMBOL[card.suit]}</span>
-              </div>
-
-              {/* 中央大花色 */}
-              <div className={`flex-1 flex items-center justify-center ${colorClass}`}>
-                <span className="font-screen" style={{ fontSize: fs * 2.2, lineHeight: 1 }}>
-                  {SUIT_SYMBOL[card.suit]}
-                </span>
-              </div>
-
-              {/* 右下角：点数 + 花色（旋转180°，竖排紧凑） */}
-              <div className={`flex flex-col items-center leading-none rotate-180 ${colorClass}`} style={{ fontSize: fs }}>
-                <span className="font-screen font-bold">{card.rank}</span>
-                <span style={{ fontSize: fs * 0.85, lineHeight: 1 }}>{SUIT_SYMBOL[card.suit]}</span>
-              </div>
-            </>
-          )}
+          {card && <CardFace card={card} fs={fs} />}
         </div>
 
         {/* 背面 */}
@@ -78,10 +55,43 @@ export function PixelCard({ card, revealed = true, highlight = false, size = 'md
           style={{
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
-            borderRadius: 4,
+            borderRadius: 5,
+            border: '3px solid var(--neon-cyan)',
           }}
         />
       </motion.div>
     </motion.div>
+  );
+}
+
+/** 卡牌正面：像素风大字布局 */
+function CardFace({ card, fs }: { card: Card; fs: number }) {
+  const isRed = isRedSuit(card.suit);
+  const color = isRed ? '#cc0000' : '#0a0a18';
+  const suit = SUIT_SYMBOL[card.suit];
+
+  return (
+    <>
+      {/* 左上角：点数（大）+ 花色（小） */}
+      <div className="flex flex-col items-center leading-none" style={{ color, padding: '4px 2px 0 4px' }}>
+        <span style={{ fontSize: fs, fontWeight: 900, fontFamily: 'monospace', letterSpacing: '-1px' }}>
+          {card.rank}
+        </span>
+        <span style={{ fontSize: fs * 0.7, lineHeight: 1.1 }}>{suit}</span>
+      </div>
+
+      {/* 中央大花色 */}
+      <div className="flex-1 flex items-center justify-center" style={{ color }}>
+        <span style={{ fontSize: fs * 2.4, lineHeight: 1, fontWeight: 900 }}>{suit}</span>
+      </div>
+
+      {/* 右下角：点数 + 花色（旋转） */}
+      <div className="flex flex-col items-center leading-none rotate-180" style={{ color, padding: '0 4px 4px 2px' }}>
+        <span style={{ fontSize: fs, fontWeight: 900, fontFamily: 'monospace', letterSpacing: '-1px' }}>
+          {card.rank}
+        </span>
+        <span style={{ fontSize: fs * 0.7, lineHeight: 1.1 }}>{suit}</span>
+      </div>
+    </>
   );
 }

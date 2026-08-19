@@ -512,3 +512,12 @@ body {
 .pixel-btn:disabled:hover {
   transform: none;
 }
+
+/* 我的大底牌区（公共牌下方） */
+.my-hole-cards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+}
