@@ -82,20 +82,26 @@ export function SeatSlot({
           {p.chips}
         </span>
 
-        {p.betThisRound > 0 && (
-          <span className="bet-chip">▲ {p.betThisRound}</span>
-        )}
+        {p.isAllIn ? (
+          /* all-in 只显示一个简洁标签，不重复堆叠 */
+          <span className="font-screen text-[9px] text-neon-pink blink">全押 {p.totalCommitted}</span>
+        ) : (
+          <>
+            {p.betThisRound > 0 && (
+              <span className="bet-chip">▲ {p.betThisRound}</span>
+            )}
 
-        {p.lastAction && (
-          <span className="action-tag" style={{ color: actionColor(p.lastAction.type) }}>
-            {ACTION_LABEL[p.lastAction.type]}
-            {p.lastAction.amount ? ' ' + p.lastAction.amount : ''}
-          </span>
-        )}
+            {p.lastAction && (
+              <span className="action-tag" style={{ color: actionColor(p.lastAction.type) }}>
+                {ACTION_LABEL[p.lastAction.type]}
+                {p.lastAction.amount ? ' ' + p.lastAction.amount : ''}
+              </span>
+            )}
 
-        {p.hasFolded && <span className="font-screen text-[9px] text-neon-red">弃牌</span>}
-        {p.isAllIn && <span className="font-screen text-[9px] text-neon-pink blink">ALL IN</span>}
-        {isActive && <span className="font-screen text-[9px] text-neon-yellow blink">▶ 行动中</span>}
+            {p.hasFolded && <span className="font-screen text-[9px] text-neon-red">弃牌</span>}
+            {isActive && <span className="font-screen text-[9px] text-neon-yellow blink">▶ 行动中</span>}
+          </>
+        )}
       </div>
     </div>
   );
