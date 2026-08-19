@@ -35,13 +35,28 @@ export function CommunityArea({ state }: CommunityAreaProps) {
 
   return (
     <div className="community-area">
-      {/* 阶段指示 */}
-      <div
-        className="stage-indicator"
-        style={{ color: stageColor, borderColor: stageColor }}
-      >
-        {STAGE_LABEL[state.stage]}
-        {state.handNumber > 0 && <span className="ml-2 opacity-60">#{state.handNumber}</span>}
+      {/* 阶段指示 + 底池（同一行） */}
+      <div className="community-header">
+        <div
+          className="stage-indicator"
+          style={{ color: stageColor, borderColor: stageColor }}
+        >
+          {STAGE_LABEL[state.stage]}
+          {state.handNumber > 0 && <span className="ml-2 opacity-60">#{state.handNumber}</span>}
+        </div>
+
+        <div className="pot-display">
+          <span className="font-screen text-xs glow-yellow">POT</span>
+          <span className="font-mono text-2xl glow-yellow leading-none">
+            {state.currentPot.toLocaleString()}
+          </span>
+        </div>
+
+        {state.currentBet > 0 && (
+          <span className="font-screen text-[10px] text-neon-cyan">
+            当前注 {state.currentBet}
+          </span>
+        )}
       </div>
 
       {/* 公共牌 */}
@@ -56,19 +71,6 @@ export function CommunityArea({ state }: CommunityAreaProps) {
               style={{ width: 80, height: 114, opacity: 0.3 }}
             />
           ),
-        )}
-      </div>
-
-      {/* 底池 */}
-      <div className="pot-display">
-        <span className="font-screen text-xs glow-yellow">POT</span>
-        <span className="font-mono text-2xl glow-yellow leading-none">
-          {state.currentPot.toLocaleString()}
-        </span>
-        {state.currentBet > 0 && (
-          <span className="font-screen text-[10px] text-neon-cyan ml-2">
-            当前注 {state.currentBet}
-          </span>
         )}
       </div>
     </div>
