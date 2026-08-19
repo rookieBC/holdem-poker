@@ -10,39 +10,32 @@ interface PokerTableProps {
 }
 
 /**
- * 牌桌布局（以我为中心的视角）：
- *
- *   ┌─────────────────────────┐
- *   │  座位3(顶)               │  ← 上区：其他玩家
- *   │  座位2  公共牌  座位4     │  ← 中上区：公共牌区
- *   │  座位1  底池    座位5     │  ← 中区：底池
- *   │  座位1  我的底牌  座位5   │  ← 中下区：我的大底牌
- *   │        座位0(我)         │  ← 下区：我的座位
- *   └─────────────────────────┘
- *
- * 绝对定位的座位 + flex 中央内容区，三区不重叠。
+ * 牌桌布局（以我为中心）：
+ *   公共牌 + 底池 在上半部（top:40%）
+ *   我的底牌 在下半部（top:72%，座位正上方）
+ *   我的座位 在最底部（top:92%）
+ * 互不重叠。
  */
 
-// 6座布局：显示位置 -> {top, left}，位置0=自己(底部中央)
 const POS_6 = [
-  { top: '90%', left: '50%' },   // 0 自己（最底部中央）
-  { top: '78%', left: '10%' },   // 1 左下
-  { top: '38%', left: '4%' },    // 2 左上
-  { top: '6%', left: '50%' },    // 3 顶部中央
-  { top: '38%', left: '96%' },   // 4 右上
-  { top: '78%', left: '90%' },   // 5 右下
+  { top: '92%', left: '50%' },   // 0 自己（最底部）
+  { top: '80%', left: '8%' },    // 1 左下
+  { top: '40%', left: '4%' },    // 2 左上
+  { top: '5%', left: '50%' },    // 3 顶部
+  { top: '40%', left: '96%' },   // 4 右上
+  { top: '80%', left: '92%' },   // 5 右下
 ];
 
 const POS_9 = [
-  { top: '90%', left: '50%' },   // 0 自己
-  { top: '76%', left: '14%' },   // 1 左下
-  { top: '44%', left: '3%' },    // 2 左侧
-  { top: '10%', left: '16%' },   // 3 顶部偏左
+  { top: '92%', left: '50%' },   // 0 自己
+  { top: '78%', left: '12%' },   // 1 左下
+  { top: '46%', left: '3%' },    // 2 左侧
+  { top: '10%', left: '14%' },   // 3 顶部偏左
   { top: '4%', left: '50%' },    // 4 顶部中央
-  { top: '10%', left: '84%' },   // 5 顶部偏右
-  { top: '44%', left: '97%' },   // 6 右侧
-  { top: '76%', left: '86%' },   // 7 右下
-  { top: '76%', left: '70%' },   // 8 备用
+  { top: '10%', left: '86%' },   // 5 顶部偏右
+  { top: '46%', left: '97%' },   // 6 右侧
+  { top: '78%', left: '88%' },   // 7 右下
+  { top: '78%', left: '70%' },   // 8 备用
 ];
 
 export function PokerTable({ state, myPlayerId }: PokerTableProps) {
@@ -59,15 +52,13 @@ export function PokerTable({ state, myPlayerId }: PokerTableProps) {
     .map((seat, realIndex) => ({ seat, realIndex, displayPos: getDisplayPos(realIndex) }))
     .sort((a, b) => a.displayPos - b.displayPos);
 
-  // 我的底牌
   const mySeat = state.seats[mySeatIndex];
   const myPlayer = mySeat?.player;
   const myHoleCards = myPlayer?.holeCards;
-  const isShowdown = state.stage === GameStage.Showdown || state.stage === GameStage.Settled;
 
   return (
     <div className="poker-table">
-      {/* 座位环排（绝对定位，以我为中心） */}
+      {/* 座位环排 */}
       {renderedSeats.map(({ seat, realIndex, displayPos }) => {
         const pos = positions[displayPos] ?? positions[0];
         const isMe = seat.player?.id === myPlayerId;
@@ -91,23 +82,22 @@ export function PokerTable({ state, myPlayerId }: PokerTableProps) {
         );
       })}
 
-      {/* 中央内容区：公共牌(上) + 底池(中) + 我的底牌(下) */}
-      <div className="table-content">
-        {/* 上区：公共牌 */}
+      {/* 公共牌 + 底池（上半部） */}
+      <div className="table-content-top">
         <CommunityArea state={state} />
-
-        {/* 下区：我的大底牌 */}
-        {myHoleCards && myHoleCards.length > 0 && (
-          <div className="my-hole-cards">
-            <span className="font-screen text-[9px] glow-green">▼ 我的底牌</span>
-            <div className="flex gap-3 justify-center">
-              {myHoleCards.map((c) => (
-                <PixelCard key={c.id} card={c} revealed size="md" />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* 我的大底牌（下半部，座位正上方） */}
+      {myHoleCards && myHoleCards.length > 0 && (
+        <div className="my-hole-cards-zone">
+          <span className="font-screen text-[9px] glow-green mb-1">▼ 我的底牌</span>
+          <div className="flex gap-3 justify-center">
+            {myHoleCards.map((c) => (
+              <PixelCard key={c.id} card={c} revealed size="md" />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

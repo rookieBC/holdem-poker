@@ -334,17 +334,30 @@ body {
 }
 
 /* 牌桌中央区域（公共牌 + 底池） */
-.table-content {
+.table-content-top {
   position: absolute;
-  top: 50%;
+  top: 38%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   z-index: 2;
-  width: 90%;
+  width: 88%;
+}
+
+/* 我的大底牌区（下半部，座位正上方） */
+.my-hole-cards-zone {
+  position: absolute;
+  top: 74%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 2;
 }
 
 /* 公共牌区 */
@@ -524,15 +537,7 @@ body {
 }
 
 /* 我的大底牌区（公共牌下方） */
-.my-hole-cards {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding-top: 6px;
-  border-top: 1px dashed rgba(0, 240, 255, 0.15);
-  width: 100%;
-}
+/* my-hole-cards 已迁移到 my-hole-cards-zone */
 
 /* 操作面板状态提示 */
 .action-status {
@@ -548,4 +553,16 @@ body {
 .action-panel-active {
   border-color: var(--neon-green);
   box-shadow: 0 0 16px rgba(57, 255, 20, 0.35);
+}
+
+/* 加注行（常驻显示，滑杆+按钮并排） */
+.raise-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 4px;
 }
