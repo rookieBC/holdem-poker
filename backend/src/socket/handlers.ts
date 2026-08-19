@@ -2,7 +2,7 @@
 import { ClientEvent, ServerEvent } from '@holdem/shared';
 import type { Account, PlayerAction, Room } from '@holdem/shared';
 import { loginOrCreate, getAccountById, updateAccount, recordGameResult } from '../store/accounts.js';
-import { getRoom, listRooms, createRoom, defaultConfig } from '../store/rooms.js';
+import { getRoom, listRooms, createRoom, defaultConfig, deleteRoom } from '../store/rooms.js';
 import { startGame, processAction, endHand } from '../game/gameManager.js';
 import { filterRoomForPlayer, filterStateForPlayer, toLobbyRoomInfo } from '../game/broadcast.js';
 import { logger } from '../lib/logger.js';
@@ -53,6 +53,18 @@ function syncAccountsAfterSettle(room: Room): void {
     recordGameResult(acc, won, Math.max(0, delta), undefined);
     updateAccount(acc);
   }
+}
+
+/** 检查房间是否应销毁：无人在socket房间且无座位玩家 */
+function shouldDestroyRoom(io: Server, roomId: string): boolean {
+  const room = getRoom(roomId);
+  if (!room) return true;
+  if (room.gameState) return false;
+  const hasSeatedPlayer = room.seats.some((s) => s.player !== null);
+  if (hasSeatedPlayer) return false;
+  const sockets = io.sockets.adapter.rooms.get(roomId);
+  const hasConnection = sockets && sockets.size > 0;
+  return !hasConnection;
 }
 
 export function registerSocketHandlers(io: Server): void {
@@ -107,7 +119,13 @@ export function registerSocketHandlers(io: Server): void {
       socket.leave(payload.roomId);
       socketRoomMap.delete(socket.id);
       ack?.();
-      if (room) broadcastRoomState(io, room, payload.roomId);
+      // 无人则销毁房间
+      if (room && shouldDestroyRoom(io, room.id)) {
+        deleteRoom(room.id);
+        logger.info('房间已销毁(无人): ' + room.name);
+      } else if (room) {
+        broadcastRoomState(io, room, payload.roomId);
+      }
     });
 
     // 坐下
@@ -210,7 +228,12 @@ export function registerSocketHandlers(io: Server): void {
         if (room) {
           const seat = room.seats.find((s) => s.player?.id === acc.id);
           if (seat && !room.gameState) seat.player = null;
-          broadcastRoomState(io, room, roomId);
+          if (shouldDestroyRoom(io, room.id)) {
+            deleteRoom(room.id);
+            logger.info('房间已销毁(无人断开): ' + room.name);
+          } else {
+            broadcastRoomState(io, room, roomId);
+          }
         }
       }
       socketRoomMap.delete(socket.id);

@@ -91,18 +91,20 @@ export function RoomPage() {
       </header>
 
       {error && (
-        <div className="info-banner border-neon-red text-neon-red blink">{error}</div>
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 info-banner border-neon-red text-neon-red blink">
+          {error}
+        </div>
       )}
 
       {/* 主区域 */}
       <div className="flex-1 overflow-auto p-2 md:p-4 flex flex-col items-center gap-4">
         {inGame && activeGameState ? (
-          /* 游戏进行中：渲染完整像素牌桌 */
-          <div className="w-full flex-1 min-h-[520px] flex flex-col">
-            <div className="flex-1 min-h-[460px]">
-              <PokerTable state={activeGameState} myPlayerId={account.id} />
+          /* 游戏进行中：牌桌占满主区域，操作面板浮动在底部 */
+          <div className="w-full flex-1 relative min-h-[480px]">
+            <PokerTable state={activeGameState} myPlayerId={account.id} />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-2xl z-30 pb-2">
+              <ActionPanel state={activeGameState} />
             </div>
-            <ActionPanel state={activeGameState} />
           </div>
         ) : (
           <>
