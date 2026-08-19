@@ -284,3 +284,154 @@ body {
   padding: 6px 16px;
   border: 2px solid;
 }
+
+/* ============================================================
+   阶段4 补充样式：像素风牌桌
+   ============================================================ */
+
+/* 牌桌主容器 */
+.poker-table {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, #0d3b1f 0%, #082815 60%, #051a0c 100%);
+  border: 4px solid #1a3a2a;
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.5),
+    inset 0 0 80px rgba(13, 59, 31, 0.4),
+    0 0 20px rgba(0, 240, 255, 0.1);
+  overflow: hidden;
+}
+/* 像素绒布纹理 */
+.poker-table::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+}
+/* 内圈装饰线 */
+.poker-table::after {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border: 2px dashed rgba(0, 240, 255, 0.15);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* 座位定位槽：绝对定位到牌桌四周 */
+.seat-slot {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 5;
+}
+
+/* 牌桌中央区域（公共牌 + 底池） */
+.table-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 2;
+}
+
+/* 底池 */
+.pot-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 18px;
+  background: rgba(10, 10, 24, 0.7);
+  border: 2px solid var(--neon-yellow);
+  box-shadow: 0 0 12px rgba(255, 230, 0, 0.4);
+}
+
+/* 阶段指示 */
+.stage-indicator {
+  font-family: 'Silkscreen', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 3px 12px;
+  border: 1px solid;
+  text-transform: uppercase;
+}
+
+/* 玩家信息卡 */
+.player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  background: rgba(10, 10, 24, 0.85);
+  border: 2px solid #2a2a55;
+  min-width: 100px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.player-card.is-active {
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 12px rgba(255, 230, 0, 0.6);
+}
+.player-card.is-folded {
+  opacity: 0.4;
+  filter: grayscale(0.6);
+}
+.player-card.is-allin {
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 10px rgba(255, 45, 117, 0.5);
+}
+
+/* 玩家底牌区（小尺寸，在座位旁） */
+.hole-cards-row {
+  display: flex;
+  gap: 2px;
+}
+
+/* 当前下注标识（座位旁的小筹码标记） */
+.bet-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: var(--neon-yellow);
+  background: rgba(10, 10, 24, 0.7);
+  border: 1px solid var(--neon-yellow);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+/* 动作标签 */
+.action-tag {
+  font-family: 'Silkscreen', monospace;
+  font-size: 9px;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  text-transform: uppercase;
+}
+.action-tag.fold { color: var(--neon-red); }
+.action-tag.check { color: var(--neon-cyan); }
+.action-tag.call { color: var(--neon-cyan); }
+.action-tag.raise { color: var(--neon-green); }
+.action-tag.all-in { color: var(--neon-pink); }
+
+/* 空座位（牌桌上等待加入） */
+.seat-empty-table {
+  opacity: 0.5;
+  border-style: dashed;
+  border-color: #3a3a66;
+}
+.seat-empty-table:hover {
+  opacity: 0.8;
+  border-color: var(--neon-cyan);
+}

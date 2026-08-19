@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CrtOverlay } from '../components/CrtOverlay';
+import { PokerTable } from '../components/PokerTable';
 import { useAccountStore } from '../store/account';
 import { useRoomStore } from '../store/room';
 import { useGameStore } from '../store/game';
@@ -12,11 +13,23 @@ export function RoomPage() {
   const navigate = useNavigate();
   const account = useAccountStore((s) => s.account);
   const clear = useAccountStore((s) => s.clear);
-  const { currentRoom, error, joinRoom, leaveRoom, takeSeat, standUp, toggleReady, startGame, setRoom, subscribe, refreshLobby } = useRoomStore();
+  const {
+    currentRoom,
+    error,
+    joinRoom,
+    leaveRoom,
+    takeSeat,
+    standUp,
+    toggleReady,
+    startGame,
+    setRoom,
+    subscribe,
+    refreshLobby,
+  } = useRoomStore();
   const subscribeGame = useGameStore((s) => s.subscribe);
   const gameState = useGameStore((s) => s.state);
 
-  // 拦截未登录
+  // 拦截未登录 + 订阅推送
   useEffect(() => {
     connect();
     subscribe();
@@ -24,7 +37,7 @@ export function RoomPage() {
     if (!account) navigate('/');
   }, [account, navigate, subscribe, subscribeGame]);
 
-  // 进入房间并订阅推送
+  // 进入房间
   useEffect(() => {
     if (!roomId) return;
     if (!currentRoom || currentRoom.id !== roomId) {
@@ -41,10 +54,13 @@ export function RoomPage() {
 
   if (!account) return null;
 
+  // 优先用 game store 推送的 state，回退到 room 里的 state
+  const activeGameState = gameState ?? currentRoom?.gameState ?? null;
+  const inGame = activeGameState !== null;
+
   const seats = currentRoom?.seats ?? [];
   const mySeat = seats.find((s) => s.player?.id === account.id);
   const isHost = currentRoom?.hostPlayerId === account.id;
-  const inGame = !!currentRoom?.gameState || !!gameState;
   const seatedCount = seats.filter((s) => s.player !== null).length;
   const readyCount = seats.filter((s) => s.player?.isReady).length;
   const minPlayers = currentRoom?.config.minPlayers ?? 2;
@@ -54,7 +70,7 @@ export function RoomPage() {
       <CrtOverlay />
 
       {/* 顶栏 */}
-      <header className="flex items-center justify-between px-6 py-4 border-b-2 border-neon-purple/40 bg-bg-dark/60">
+      <header className="flex items-center justify-between px-6 py-3 border-b-2 border-neon-purple/40 bg-bg-dark/60 shrink-0">
         <div className="flex items-center gap-4">
           <button className="pixel-btn text-xs" onClick={handleLeave}>
             ← 返回大厅
@@ -78,12 +94,15 @@ export function RoomPage() {
       )}
 
       {/* 主区域 */}
-      <div className="flex-1 overflow-auto p-6 flex flex-col items-center gap-6">
-        {inGame ? (
-          <GameStartedBanner />
+      <div className="flex-1 overflow-auto p-2 md:p-4 flex flex-col items-center gap-4">
+        {inGame && activeGameState ? (
+          /* 游戏进行中：渲染完整像素牌桌 */
+          <div className="w-full flex-1 min-h-[520px]">
+            <PokerTable state={activeGameState} myPlayerId={account.id} />
+          </div>
         ) : (
           <>
-            {/* 座位环排（简版：网格） */}
+            {/* 未开局：座位选择 */}
             <div className="pixel-panel p-6 w-full max-w-3xl">
               <h2 className="font-screen text-sm glow-purple mb-4 text-center">
                 ◇ 选择座位坐下 ◇
@@ -179,34 +198,18 @@ export function RoomPage() {
       </div>
 
       {/* 底部账户信息 */}
-      <footer className="px-6 py-3 border-t border-neon-purple/20 bg-bg-dark/40 flex justify-between items-center">
+      <footer className="px-6 py-2 border-t border-neon-purple/20 bg-bg-dark/40 flex justify-between items-center shrink-0">
         <span className="font-mono text-xs text-gray-500">ID: {account.id}</span>
         <button
           className="pixel-btn pixel-btn-pink text-[10px]"
-          onClick={() => { clear(); navigate('/'); }}
+          onClick={() => {
+            clear();
+            navigate('/');
+          }}
         >
           登出
         </button>
       </footer>
     </div>
-  );
-}
-
-/** 游戏已开始提示横幅（完整牌桌渲染留给阶段4） */
-function GameStartedBanner() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="pixel-panel p-10 text-center max-w-md"
-    >
-      <h2 className="title-font text-xl glow-pink mb-3">游戏开始！</h2>
-      <p className="font-mono text-lg text-neon-cyan mb-2">◆ 牌局进行中 ◆</p>
-      <p className="font-mono text-sm text-gray-400">
-        完整像素牌桌界面将在阶段 4 实现，
-        <br />
-        届时可在此进行完整下注交互。
-      </p>
-    </motion.div>
   );
 }
