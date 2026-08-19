@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import type { GameState } from '@holdem/shared';
 import { useAccountStore } from '../store/account';
 import { useRoomStore } from '../store/room';
@@ -14,54 +14,62 @@ export function ActionPanel({ state }: ActionPanelProps) {
   const [raiseAmount, setRaiseAmount] = useState(0);
   const [showRaiseSlider, setShowRaiseSlider] = useState(false);
 
-  // 所有 hooks 必须在条件 return 之前调用
-  const mySeat = state.seats[state.currentPlayerIndex];
-  const myPlayer = mySeat?.player;
-  const isMyTurn = !!account && !!myPlayer && myPlayer.id === account.id;
+  // 找到自己的玩家信息（不依赖 currentPlayerIndex）
+  const mySeat = state.seats.find((s) => s.player?.id === account?.id);
+  const myPlayer = mySeat?.player ?? null;
+  const isMyTurn =
+    !!account &&
+    !!myPlayer &&
+    myPlayer.id === account.id &&
+    state.currentPlayerIndex === mySeat!.index &&
+    state.stage !== 'settled' &&
+    state.stage !== 'showdown';
+
+  const isFolded = myPlayer?.hasFolded ?? false;
+  const isAllIn = myPlayer?.isAllIn ?? false;
+  const isSpectating = !myPlayer;
+
+  // 可行动状态：轮到我 + 没弃牌 + 没全押 + 不是旁观
+  const canAct = isMyTurn && !isFolded && !isAllIn && !isSpectating;
 
   const toCall = myPlayer ? state.currentBet - myPlayer.betThisRound : 0;
-  const canCheck = isMyTurn && toCall <= 0;
-  const canCall = isMyTurn && toCall > 0;
+  const canCheck = canAct && toCall <= 0;
+  const canCall = canAct && toCall > 0;
   const minRaiseTo = myPlayer ? state.currentBet + state.minRaise : 0;
   const maxAffordable = myPlayer ? myPlayer.betThisRound + myPlayer.chips : 0;
-  const canRaise = isMyTurn && maxAffordable > state.currentBet;
-  const canAllIn = isMyTurn && !!myPlayer && myPlayer.chips > 0;
+  const canRaise = canAct && maxAffordable > state.currentBet;
+  const canAllIn = canAct && !!myPlayer && myPlayer.chips > 0;
   const callAmount = myPlayer ? Math.min(toCall, myPlayer.chips) : 0;
   const raiseMin = Math.min(minRaiseTo, maxAffordable);
   const raiseMax = maxAffordable;
 
-  // 初始化加注金额（hooks 在 return 之前）
+  // 加注滑杆初始化
   useEffect(() => {
     if (showRaiseSlider && canRaise) {
       setRaiseAmount(raiseMin);
     }
   }, [showRaiseSlider, canRaise, raiseMin]);
 
-  if (!account) return null;
+  // 状态提示文字
+  let statusText = '';
+  if (isSpectating) statusText = '旁观中';
+  else if (isFolded) statusText = '已弃牌 · 等待本局结束';
+  else if (isAllIn) statusText = '已全押 · 等待结算';
+  else if (!isMyTurn) statusText = '等待其他玩家行动…';
+  else statusText = '▶ 轮到你行动';
 
-  // 非我回合
-  if (!myPlayer || !isMyTurn) {
-    const me = state.seats.find((s) => s.player?.id === account.id)?.player;
-    if (me && me.inHand && !me.hasFolded && !me.isAllIn) {
-      return (
-        <div className="action-panel-wrapper waiting">
-          <span className="font-screen text-xs glow-cyan blink">▶ 等待其他玩家行动 ◀</span>
-        </div>
-      );
-    }
-    return null;
-  }
-
-  const handleFold = () => takeAction({ type: 'fold' });
-  const handleCheck = () => takeAction({ type: 'check' });
-  const handleCall = () => takeAction({ type: 'call' });
-  const handleAllIn = () => takeAction({ type: 'all-in' });
+  const handleFold = () => canAct && takeAction({ type: 'fold' });
+  const handleCheck = () => canAct && takeAction({ type: 'check' });
+  const handleCall = () => canAct && takeAction({ type: 'call' });
+  const handleAllIn = () => canAct && takeAction({ type: 'all-in' });
   const handleRaise = () => {
-    takeAction({ type: 'raise', amount: raiseAmount });
-    setShowRaiseSlider(false);
+    if (canAct) {
+      takeAction({ type: 'raise', amount: raiseAmount });
+      setShowRaiseSlider(false);
+    }
   };
 
-  const potForRaise = state.currentPot + myPlayer.betThisRound;
+  const potForRaise = state.currentPot + (myPlayer?.betThisRound ?? 0);
   const quickRaises = [
     { label: 'MIN', value: raiseMin },
     { label: '1/2池', value: Math.min(Math.round(potForRaise * 0.5) + state.currentBet, raiseMax) },
@@ -76,8 +84,13 @@ export function ActionPanel({ state }: ActionPanelProps) {
         </div>
       )}
 
-      <div className="action-panel">
-        {/* 加注滑杆区（展开时显示） */}
+      <div className={'action-panel' + (canAct ? ' action-panel-active' : '')}>
+        {/* 状态提示（常驻） */}
+        <div className={'action-status ' + (canAct ? 'glow-yellow blink' : 'text-gray-500')}>
+          {statusText}
+        </div>
+
+        {/* 加注滑杆区（仅可加注时展开） */}
         <AnimatePresence>
           {showRaiseSlider && canRaise && (
             <motion.div
@@ -111,10 +124,7 @@ export function ActionPanel({ state }: ActionPanelProps) {
                     {q.label}
                   </button>
                 ))}
-                <button
-                  className="pixel-btn pixel-btn-green text-[10px]"
-                  onClick={handleRaise}
-                >
+                <button className="pixel-btn pixel-btn-green text-[10px]" onClick={handleRaise}>
                   ✓ 确认加注 {raiseAmount}
                 </button>
                 <button
@@ -128,49 +138,31 @@ export function ActionPanel({ state }: ActionPanelProps) {
           )}
         </AnimatePresence>
 
-        {/* 主动作栏 */}
+        {/* 主动作栏（常驻，非自己回合全部禁用） */}
         <div className="flex gap-2 flex-wrap justify-center items-center">
-          <button
-            className="pixel-btn pixel-btn-pink"
-            onClick={handleFold}
-          >
+          <button className="pixel-btn pixel-btn-pink" onClick={handleFold} disabled={!canAct}>
             弃牌
           </button>
 
-          <button
-            className="pixel-btn pixel-btn-cyan"
-            onClick={handleCheck}
-            disabled={!canCheck}
-          >
+          <button className="pixel-btn pixel-btn-cyan" onClick={handleCheck} disabled={!canCheck}>
             过牌
           </button>
 
-          {canCall && (
-            <button
-              className="pixel-btn pixel-btn-cyan"
-              onClick={handleCall}
-            >
-              跟注 {callAmount}
-            </button>
-          )}
+          <button className="pixel-btn pixel-btn-cyan" onClick={handleCall} disabled={!canCall}>
+            跟注 {canCall ? callAmount : ''}
+          </button>
 
-          {canRaise && (
-            <button
-              className="pixel-btn pixel-btn-green"
-              onClick={() => setShowRaiseSlider((v) => !v)}
-            >
-              {showRaiseSlider ? '▲ 收起' : '加注 ▼'}
-            </button>
-          )}
+          <button
+            className="pixel-btn pixel-btn-green"
+            onClick={() => setShowRaiseSlider((v) => !v)}
+            disabled={!canRaise}
+          >
+            {showRaiseSlider ? '▲ 收起' : '加注 ▼'}
+          </button>
 
-          {canAllIn && (
-            <button
-              className="pixel-btn pixel-btn-pink"
-              onClick={handleAllIn}
-            >
-              全押 {myPlayer.chips}
-            </button>
-          )}
+          <button className="pixel-btn pixel-btn-pink" onClick={handleAllIn} disabled={!canAllIn}>
+            全押 {canAllIn ? myPlayer!.chips : ''}
+          </button>
         </div>
       </div>
     </div>
