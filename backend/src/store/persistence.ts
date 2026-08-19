@@ -1,8 +1,12 @@
-﻿import fs from 'node:fs';
+import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { logger } from '../lib/logger.js';
 
-const DATA_DIR = path.resolve(process.cwd(), 'backend', 'data');
+// 基于源文件位置定位 data 目录，避免受 process.cwd() 影响
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// src/store/ -> 向上两级到 backend/ -> backend/data
+const DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
 
 function ensureDir(): void {
   if (!fs.existsSync(DATA_DIR)) {
