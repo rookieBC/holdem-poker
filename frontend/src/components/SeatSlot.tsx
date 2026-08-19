@@ -69,9 +69,9 @@ export function SeatSlot({
       {/* 玩家信息卡 */}
       <div className={cardClass}>
         <div className="flex items-center gap-1">
-          {isDealer && <span className="dealer-btn" title="庄家">D</span>}
-          {isSmallBlind && <span className="blind-tag" style={{ color: 'var(--neon-blue)' }}>SB</span>}
-          {isBigBlind && <span className="blind-tag" style={{ color: 'var(--neon-red)' }}>BB</span>}
+          {isDealer && <span className="dealer-btn" title="庄家">庄</span>}
+          {isSmallBlind && <span className="blind-tag" style={{ color: 'var(--neon-blue)' }}>小盲</span>}
+          {isBigBlind && <span className="blind-tag" style={{ color: 'var(--neon-red)' }}>大盲</span>}
         </div>
 
         <span className="font-screen text-[11px] glow-cyan truncate max-w-[100px]">
