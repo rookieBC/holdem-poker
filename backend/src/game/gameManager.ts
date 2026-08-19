@@ -88,6 +88,21 @@ export function processAction(
     }
   }
 
+  // all-in 如果超过当前下注，也需更新 currentBet（视为加注）
+  if (action.type === 'all-in') {
+    const allInBet = player.betThisRound;
+    if (allInBet > state.currentBet) {
+      const raiseDelta = allInBet - state.currentBet;
+      state.currentBet = allInBet;
+      if (raiseDelta >= state.minRaise) state.minRaise = raiseDelta;
+      // all-in 视为加注，其他玩家需重新行动
+      const acted = getActedSet(room.id);
+      for (const p of state.seats) {
+        if (p.player && p.player.id !== playerId) acted.delete(p.player.id);
+      }
+    }
+  }
+
   state.currentPot = computePot(state);
   getActedSet(room.id).add(playerId);
 

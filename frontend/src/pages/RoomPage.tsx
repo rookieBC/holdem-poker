@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CrtOverlay } from '../components/CrtOverlay';
 import { PokerTable } from '../components/PokerTable';
+import { ActionPanel } from '../components/ActionPanel';
 import { useAccountStore } from '../store/account';
 import { useRoomStore } from '../store/room';
 import { useGameStore } from '../store/game';
@@ -97,8 +98,11 @@ export function RoomPage() {
       <div className="flex-1 overflow-auto p-2 md:p-4 flex flex-col items-center gap-4">
         {inGame && activeGameState ? (
           /* 游戏进行中：渲染完整像素牌桌 */
-          <div className="w-full flex-1 min-h-[520px]">
-            <PokerTable state={activeGameState} myPlayerId={account.id} />
+          <div className="w-full flex-1 min-h-[520px] flex flex-col">
+            <div className="flex-1 min-h-[460px]">
+              <PokerTable state={activeGameState} myPlayerId={account.id} />
+            </div>
+            <ActionPanel state={activeGameState} />
           </div>
         ) : (
           <>

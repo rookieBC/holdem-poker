@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Room } from '@holdem/shared';
+import type { Room, PlayerAction } from '@holdem/shared';
 import type { LobbyRoomInfo } from '../lib/socket';
 import { api, subscriptions } from '../lib/socket';
 
@@ -32,7 +32,10 @@ interface RoomStore {
   currentRoom: Room | null;
   /** 加载态 */
   loading: boolean;
+  /** 通用错误（大厅/房间操作） */
   error: string | null;
+  /** 下注操作专用错误（操作面板用） */
+  lastError: string | null;
   /** 是否已订阅服务端推送 */
   _subscribed: boolean;
 
@@ -44,6 +47,8 @@ interface RoomStore {
   standUp: () => Promise<void>;
   toggleReady: () => Promise<boolean>;
   startGame: () => Promise<boolean>;
+  /** 发送下注动作 */
+  takeAction: (action: PlayerAction) => Promise<boolean>;
   setRoom: (room: Room | null) => void;
   clearError: () => void;
   /** 订阅服务端房间/游戏状态推送（幂等） */
@@ -55,6 +60,7 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
   currentRoom: null,
   loading: false,
   error: null,
+  lastError: null,
   _subscribed: false,
 
   refreshLobby: async () => {
@@ -140,6 +146,23 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
     return true;
   },
 
+  takeAction: async (action) => {
+    const room = get().currentRoom;
+    if (!room) return false;
+    // 清除上一次操作错误
+    set({ lastError: null });
+    const res = await api.action(room.id, action);
+    if (res && 'error' in res) {
+      // 操作错误用 lastError，自动 3 秒过期
+      set({ lastError: res.error });
+      setTimeout(() => {
+        if (get().lastError === res.error) set({ lastError: null });
+      }, 3000);
+      return false;
+    }
+    return true;
+  },
+
   setRoom: (currentRoom) => set({ currentRoom }),
 
   clearError: () => clearError(set),
@@ -148,7 +171,6 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
     if (get()._subscribed) return;
     set({ _subscribed: true });
     subscriptions.onRoomState((room) => {
-      // 收到房间状态推送时，清除残留 error（局面已变化）
       clearError(set);
       set({ currentRoom: room });
     });
