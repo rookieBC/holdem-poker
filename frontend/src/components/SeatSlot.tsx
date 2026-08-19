@@ -84,7 +84,7 @@ export function SeatSlot({
 
         {p.isAllIn ? (
           /* all-in 只显示一个简洁标签，不重复堆叠 */
-          <span className="font-screen text-[9px] text-neon-pink blink">ALL IN {p.totalCommitted}</span>
+          <span className="font-screen text-[9px] text-neon-pink blink">梭哈 {p.totalCommitted}</span>
         ) : (
           <>
             {p.betThisRound > 0 && (

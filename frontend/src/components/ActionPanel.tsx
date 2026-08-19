@@ -41,11 +41,11 @@ export function ActionPanel({ state }: ActionPanelProps) {
   }, [canRaise, raiseMin]);
 
   let statusText = '';
-  if (isSpectating) statusText = '旁观中';
-  else if (isFolded) statusText = '已弃牌 · 等待本局结束';
-  else if (isAllIn) statusText = '已全押 · 等待结算';
-  else if (!isMyTurn) statusText = '等待其他玩家行动…';
-  else statusText = '▶ 轮到你行动';
+  if (isSpectating) statusText = '🎭 旁观席';
+  else if (isFolded) statusText = '💀 已弃牌';
+  else if (isAllIn) statusText = '🔥 已梭哈';
+  else if (!isMyTurn) statusText = '⏳ 等对手出招…';
+  else statusText = '⚡ 该你了，做出选择！';
 
   const send = (type: 'fold' | 'check' | 'call' | 'all-in') =>
     canAct && takeAction({ type });
@@ -80,7 +80,7 @@ export function ActionPanel({ state }: ActionPanelProps) {
             跟注 {canCall ? callAmount : ''}
           </button>
           <button className="pixel-btn pixel-btn-pink" onClick={() => send('all-in')} disabled={!canAllIn}>
-            全押 {canAllIn ? myPlayer!.chips : ''}
+            梭哈! {canAllIn ? myPlayer!.chips : ''}
           </button>
         </div>
 
@@ -105,14 +105,14 @@ export function ActionPanel({ state }: ActionPanelProps) {
             onClick={sendRaise}
             disabled={!canRaise}
           >
-            确认
+            砸! {canRaise ? raiseAmount : ''}
           </button>
           <button
             className="pixel-btn text-[9px] shrink-0"
             disabled={!canRaise}
             onClick={() => setRaiseAmount(Math.min(Math.ceil((potForRaise * 0.5 + state.currentBet) / 10) * 10, raiseMax))}
           >
-            1/2池
+            半池
           </button>
           <button
             className="pixel-btn text-[9px] shrink-0"
