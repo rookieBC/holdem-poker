@@ -334,7 +334,7 @@ body {
 }
 
 /* 牌桌中央区域（公共牌 + 底池） */
-.table-center {
+.table-content {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -342,9 +342,17 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
   z-index: 2;
-  max-height: 85%;
+  width: 90%;
+}
+
+/* 公共牌区 */
+.community-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 /* 底池 */
@@ -521,5 +529,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  margin-top: 12px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(0, 240, 255, 0.15);
+  width: 100%;
 }

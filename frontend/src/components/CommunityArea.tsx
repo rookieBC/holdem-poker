@@ -31,12 +31,10 @@ const STAGE_COLOR: Record<GameStage, string> = {
 export function CommunityArea({ state }: CommunityAreaProps) {
   const cards = state.communityCards;
   const stageColor = STAGE_COLOR[state.stage];
-
-  // 占位：固定5格，未发的显示为空槽
   const slots = Array.from({ length: 5 }, (_, i) => cards[i] ?? null);
 
   return (
-    <div className="table-center">
+    <div className="community-area">
       {/* 阶段指示 */}
       <div
         className="stage-indicator"
@@ -47,7 +45,7 @@ export function CommunityArea({ state }: CommunityAreaProps) {
       </div>
 
       {/* 公共牌 */}
-      <div className="flex gap-2 items-center justify-center">
+      <div className="flex gap-2 items-center justify-center flex-wrap">
         {slots.map((c, i) =>
           c ? (
             <PixelCard key={c.id} card={c} revealed size="md" />
@@ -55,7 +53,7 @@ export function CommunityArea({ state }: CommunityAreaProps) {
             <div
               key={i}
               className="border-2 border-dashed border-neon-cyan/20 rounded-sm"
-              style={{ width: 64, height: 92, opacity: 0.3 }}
+              style={{ width: 80, height: 114, opacity: 0.3 }}
             />
           ),
         )}
