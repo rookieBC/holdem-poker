@@ -212,7 +212,7 @@ export function registerSocketHandlers(io: Server): void {
       if (result.newStage === 'settled' && room.gameState) {
         syncAccountsAfterSettle(room);
         setTimeout(() => {
-          endHand(room);
+          endHand(room, getAccountById);
           broadcastRoomState(io, room, room.id);
         }, 4000);
       }

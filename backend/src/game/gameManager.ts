@@ -147,16 +147,26 @@ export function processAction(
   return { ok: true, newStage: state.stage };
 }
 
-/** 清理一局，准备下一局 */
-export function endHand(room: Room): void {
+/** 清理一局，准备下一局（需传入账户查表函数以同步筹码） */
+export function endHand(room: Room, getAccountById: (id: string) => { chips: number } | undefined): void {
   if (!room.gameState) return;
   (room as Room & { _lastDealer?: number })._lastDealer = room.gameState.dealerIndex;
   room.gameState = null;
   getActedSet(room.id).clear();
   for (const seat of room.seats) {
     if (seat.player) {
+      // 从账户同步最新筹码（结算后已更新）
+      const acc = getAccountById(seat.player.id);
+      if (acc) seat.player.chips = acc.chips;
       seat.player.isReady = false;
       seat.player.lastAction = null;
+      // 重置局内状态
+      seat.player.inHand = false;
+      seat.player.hasFolded = false;
+      seat.player.isAllIn = false;
+      seat.player.betThisRound = 0;
+      seat.player.totalCommitted = 0;
+      seat.player.holeCards = null;
     }
   }
 }
