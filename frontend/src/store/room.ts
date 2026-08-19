@@ -3,6 +3,28 @@ import type { Room } from '@holdem/shared';
 import type { LobbyRoomInfo } from '../lib/socket';
 import { api, subscriptions } from '../lib/socket';
 
+// error 自动过期定时器
+let errorTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** 设置 error 并在指定毫秒后自动清除 */
+function setErrorWithExpiry(set: (partial: Partial<RoomStore>) => void, msg: string, ms = 3000) {
+  if (errorTimer) clearTimeout(errorTimer);
+  set({ error: msg });
+  errorTimer = setTimeout(() => {
+    set({ error: null });
+    errorTimer = null;
+  }, ms);
+}
+
+/** 清除 error 并取消定时器 */
+function clearError(set: (partial: Partial<RoomStore>) => void) {
+  if (errorTimer) {
+    clearTimeout(errorTimer);
+    errorTimer = null;
+  }
+  set({ error: null });
+}
+
 interface RoomStore {
   /** 大厅房间列表 */
   lobbyRooms: LobbyRoomInfo[];
@@ -23,6 +45,7 @@ interface RoomStore {
   toggleReady: () => Promise<boolean>;
   startGame: () => Promise<boolean>;
   setRoom: (room: Room | null) => void;
+  clearError: () => void;
   /** 订阅服务端房间/游戏状态推送（幂等） */
   subscribe: () => void;
 }
@@ -39,27 +62,29 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
       const rooms = await api.lobbyList();
       set({ lobbyRooms: rooms ?? [] });
     } catch {
-      set({ error: '拉取房间列表失败' });
+      setErrorWithExpiry(set, '拉取房间列表失败');
     }
   },
 
   createRoom: async (name) => {
-    set({ loading: true, error: null });
+    clearError(set);
+    set({ loading: true });
     const res = await api.roomCreate(name);
     set({ loading: false });
     if (res && 'error' in res) {
-      set({ error: res.error });
+      setErrorWithExpiry(set, res.error);
       return null;
     }
     return (res as { id: string }).id;
   },
 
   joinRoom: async (roomId) => {
-    set({ loading: true, error: null });
+    clearError(set);
+    set({ loading: true });
     const res = await api.roomJoin(roomId);
     set({ loading: false });
     if (res && 'error' in res) {
-      set({ error: res.error });
+      setErrorWithExpiry(set, res.error);
       return false;
     }
     set({ currentRoom: res as Room });
@@ -73,39 +98,43 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
   },
 
   takeSeat: async (seatIndex) => {
+    clearError(set);
     const room = get().currentRoom;
     if (!room) return false;
     const res = await api.seatTake(room.id, seatIndex);
     if (res && 'error' in res) {
-      set({ error: res.error });
+      setErrorWithExpiry(set, res.error);
       return false;
     }
     return true;
   },
 
   standUp: async () => {
+    clearError(set);
     const room = get().currentRoom;
     if (!room) return;
     await api.seatStand(room.id);
   },
 
   toggleReady: async () => {
+    clearError(set);
     const room = get().currentRoom;
     if (!room) return false;
     const res = await api.readyToggle(room.id);
     if (res && 'error' in res) {
-      set({ error: res.error });
+      setErrorWithExpiry(set, res.error);
       return false;
     }
     return true;
   },
 
   startGame: async () => {
+    clearError(set);
     const room = get().currentRoom;
     if (!room) return false;
     const res = await api.gameStart(room.id);
     if (res && 'error' in res) {
-      set({ error: res.error });
+      setErrorWithExpiry(set, res.error);
       return false;
     }
     return true;
@@ -113,9 +142,15 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
 
   setRoom: (currentRoom) => set({ currentRoom }),
 
+  clearError: () => clearError(set),
+
   subscribe: () => {
     if (get()._subscribed) return;
     set({ _subscribed: true });
-    subscriptions.onRoomState((room) => set({ currentRoom: room }));
+    subscriptions.onRoomState((room) => {
+      // 收到房间状态推送时，清除残留 error（局面已变化）
+      clearError(set);
+      set({ currentRoom: room });
+    });
   },
 }));

@@ -69,7 +69,7 @@ export function registerSocketHandlers(io: Server): void {
     });
 
     // 大厅
-    socket.on(ClientEvent.LobbyList, (ack) => {
+    socket.on(ClientEvent.LobbyList, (_payload, ack) => {
       const rooms = listRooms().map(toLobbyRoomInfo);
       ack?.(rooms);
     });

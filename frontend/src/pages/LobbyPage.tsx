@@ -36,10 +36,26 @@ export function LobbyPage() {
     }
   };
 
-  const handleJoin = async (id: string) => {
-    if (!id.trim()) return;
-    const ok = await joinRoom(id.trim());
-    if (ok) navigate(`/room/${id.trim()}`);
+  const handleJoin = async (input: string) => {
+    const val = input.trim();
+    if (!val) return;
+    // 如果输入的是房间ID（r_开头），直接加入
+    let targetId = val;
+    // 否则按房间名在列表里匹配
+    if (!val.startsWith('r_')) {
+      const matched = lobbyRooms.find(
+        (r) => r.name === val || r.id === val,
+      );
+      if (matched) {
+        targetId = matched.id;
+      } else {
+        // 名字未精确匹配，尝试模糊匹配
+        const fuzzy = lobbyRooms.find((r) => r.name.includes(val));
+        if (fuzzy) targetId = fuzzy.id;
+      }
+    }
+    const ok = await joinRoom(targetId);
+    if (ok) navigate(`/room/${targetId}`);
   };
 
   return (
@@ -89,7 +105,7 @@ export function LobbyPage() {
           <div className="flex gap-2">
             <input
               className="pixel-input"
-              placeholder="输入房间 ID"
+              placeholder="房间名 或 房间ID (如 r_xxx)"
               value={joinId}
               onChange={(e) => setJoinId(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleJoin(joinId)}

@@ -59,7 +59,7 @@ export const api = {
     emitAck<Account | { error: string }>(ClientEvent.AuthLogin, { token }),
 
   /** 拉取大厅房间列表 */
-  lobbyList: () => emitAck<LobbyRoomInfo[]>(ClientEvent.LobbyList),
+  lobbyList: () => emitAck<LobbyRoomInfo[]>(ClientEvent.LobbyList, null),
 
   /** 创建房间 */
   roomCreate: (name?: string) =>
