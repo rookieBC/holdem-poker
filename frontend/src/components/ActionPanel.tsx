@@ -32,11 +32,12 @@ export function ActionPanel({ state }: ActionPanelProps) {
   const canRaise = canAct && maxAffordable > state.currentBet;
   const canAllIn = canAct && !!myPlayer && myPlayer.chips > 0;
   const callAmount = myPlayer ? Math.min(toCall, myPlayer.chips) : 0;
-  const raiseMin = Math.min(minRaiseTo, maxAffordable);
-  const raiseMax = maxAffordable;
+  // 最小单位为10，向上取整
+  const raiseMin = Math.ceil(Math.min(minRaiseTo, maxAffordable) / 10) * 10;
+  const raiseMax = Math.floor(maxAffordable / 10) * 10;
 
   useEffect(() => {
-    if (canRaise) setRaiseAmount(raiseMin);
+    if (canRaise) setRaiseAmount(raiseMin);  // raiseMin 已是10的倍数
   }, [canRaise, raiseMin]);
 
   let statusText = '';
@@ -90,6 +91,7 @@ export function ActionPanel({ state }: ActionPanelProps) {
             type="range"
             min={raiseMin}
             max={raiseMax}
+            step={10}
             value={raiseAmount}
             onChange={(e) => setRaiseAmount(Number(e.target.value))}
             className="raise-slider"
@@ -108,14 +110,14 @@ export function ActionPanel({ state }: ActionPanelProps) {
           <button
             className="pixel-btn text-[9px] shrink-0"
             disabled={!canRaise}
-            onClick={() => setRaiseAmount(Math.min(Math.round(potForRaise * 0.5) + state.currentBet, raiseMax))}
+            onClick={() => setRaiseAmount(Math.min(Math.ceil((potForRaise * 0.5 + state.currentBet) / 10) * 10, raiseMax))}
           >
             1/2池
           </button>
           <button
             className="pixel-btn text-[9px] shrink-0"
             disabled={!canRaise}
-            onClick={() => setRaiseAmount(Math.min(Math.round(potForRaise) + state.currentBet, raiseMax))}
+            onClick={() => setRaiseAmount(Math.min(Math.ceil((potForRaise + state.currentBet) / 10) * 10, raiseMax))}
           >
             满池
           </button>
