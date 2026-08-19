@@ -1,0 +1,196 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   像素风全局基础
+   ============================================================ */
+:root {
+  --neon-pink: #ff2d75;
+  --neon-cyan: #00f0ff;
+  --neon-green: #39ff14;
+  --neon-yellow: #ffe600;
+  --neon-purple: #b026ff;
+  --bg-deep: #0a0a18;
+  color-scheme: dark;
+}
+
+* {
+  /* 锐利像素渲染 */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background: var(--bg-deep);
+  color: #e8e8ff;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  overflow: hidden;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+/* ============================================================
+   CRT 复古滤镜 overlay
+   ============================================================ */
+.crt-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+/* 扫描线 */
+.crt-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.18) 0px,
+    rgba(0, 0, 0, 0.18) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+/* 暗角 vignette */
+.crt-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* 轻微色差 */
+.crt-overlay {
+  text-shadow: 0.5px 0 0 rgba(255, 0, 80, 0.25), -0.5px 0 0 rgba(0, 200, 255, 0.25);
+}
+
+/* ============================================================
+   像素风通用组件
+   ============================================================ */
+
+/* 像素按钮 */
+.pixel-btn {
+  font-family: 'Silkscreen', monospace;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 12px 24px;
+  border: 3px solid;
+  border-radius: 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: transform 0.08s, box-shadow 0.08s;
+  position: relative;
+  image-rendering: pixelated;
+}
+
+.pixel-btn:active {
+  transform: translate(2px, 2px);
+}
+
+.pixel-btn-pink {
+  background: var(--neon-pink);
+  color: #0a0a18;
+  border-color: #0a0a18;
+  box-shadow: 4px 4px 0 #0a0a18, 0 0 12px var(--neon-pink);
+}
+.pixel-btn-pink:hover {
+  box-shadow: 4px 4px 0 #0a0a18, 0 0 24px var(--neon-pink);
+}
+
+.pixel-btn-cyan {
+  background: var(--neon-cyan);
+  color: #0a0a18;
+  border-color: #0a0a18;
+  box-shadow: 4px 4px 0 #0a0a18, 0 0 12px var(--neon-cyan);
+}
+.pixel-btn-cyan:hover {
+  box-shadow: 4px 4px 0 #0a0a18, 0 0 24px var(--neon-cyan);
+}
+
+.pixel-btn-green {
+  background: var(--neon-green);
+  color: #0a0a18;
+  border-color: #0a0a18;
+  box-shadow: 4px 4px 0 #0a0a18, 0 0 12px var(--neon-green);
+}
+
+/* 像素面板 */
+.pixel-panel {
+  background: #12122b;
+  border: 3px solid #252550;
+  box-shadow: 0 0 0 3px #0a0a18, 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+/* 像素文字发光 */
+.glow-pink {
+  color: var(--neon-pink);
+  text-shadow: 0 0 8px var(--neon-pink), 0 0 16px var(--neon-pink);
+}
+.glow-cyan {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 8px var(--neon-cyan), 0 0 16px var(--neon-cyan);
+}
+.glow-green {
+  color: var(--neon-green);
+  text-shadow: 0 0 8px var(--neon-green), 0 0 16px var(--neon-green);
+}
+.glow-yellow {
+  color: var(--neon-yellow);
+  text-shadow: 0 0 8px var(--neon-yellow), 0 0 16px var(--neon-yellow);
+}
+.glow-purple {
+  color: var(--neon-purple);
+  text-shadow: 0 0 8px var(--neon-purple), 0 0 16px var(--neon-purple);
+}
+
+/* 标题字体 */
+.title-font {
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* 抖动动画（震屏用） */
+@keyframes shake-screen {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-4px, 2px); }
+  40% { transform: translate(4px, -2px); }
+  60% { transform: translate(-3px, -3px); }
+  80% { transform: translate(3px, 3px); }
+}
+.shake {
+  animation: shake-screen 0.4s ease-in-out;
+}
+
+/* 闪烁 */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.blink {
+  animation: blink 1s infinite;
+}
+
+/* 像素卡牌背面纹理 */
+.card-back {
+  background:
+    repeating-linear-gradient(45deg, #1a1a3a 0 8px, #252550 8px 16px);
+  border: 2px solid var(--neon-cyan);
+}

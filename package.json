@@ -1,0 +1,27 @@
+{
+  "name": "holdem-poker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web 德州扑克游戏 - 像素风实时多人对战",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "echo \"请在 frontend 或 backend 目录分别运行 npm run dev\"",
+    "build": "npm run build -w shared && npm run build -w backend && npm run build -w frontend",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

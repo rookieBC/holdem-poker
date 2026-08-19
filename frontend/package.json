@@ -1,0 +1,37 @@
+{
+    "name": "@holdem/frontend",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc -b && vite build",
+        "preview": "vite preview",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@holdem/shared": "file:../shared",
+        "react": "^18.3.0",
+        "react-dom": "^18.3.0",
+        "zustand": "^4.5.0",
+        "framer-motion": "^11.3.0",
+        "socket.io-client": "^4.7.0",
+        "@tsparticles/react": "^3.0.0",
+        "@tsparticles/slim": "^3.5.0"
+    },
+    "devDependencies": {
+        "@types/react": "^18.3.0",
+        "@types/react-dom": "^18.3.0",
+        "@vitejs/plugin-react": "^4.3.0",
+        "autoprefixer": "^10.4.19",
+        "postcss": "^8.4.39",
+        "tailwindcss": "^3.4.0",
+        "typescript": "^5.5.0",
+        "vite": "^5.3.0",
+        "vitest": "^2.0.0"
+    },
+    "allowScripts": {
+        "esbuild": true,
+        "@tsparticles/engine@3.9.1": true
+    }
+}
