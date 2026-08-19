@@ -14,15 +14,33 @@ export function ActionPanel({ state }: ActionPanelProps) {
   const [raiseAmount, setRaiseAmount] = useState(0);
   const [showRaiseSlider, setShowRaiseSlider] = useState(false);
 
-  if (!account) return null;
-
+  // 所有 hooks 必须在条件 return 之前调用
   const mySeat = state.seats[state.currentPlayerIndex];
   const myPlayer = mySeat?.player;
-  const isMyTurn = myPlayer?.id === account.id;
+  const isMyTurn = !!account && !!myPlayer && myPlayer.id === account.id;
 
-  // 非我回合或玩家不存在
+  const toCall = myPlayer ? state.currentBet - myPlayer.betThisRound : 0;
+  const canCheck = isMyTurn && toCall <= 0;
+  const canCall = isMyTurn && toCall > 0;
+  const minRaiseTo = myPlayer ? state.currentBet + state.minRaise : 0;
+  const maxAffordable = myPlayer ? myPlayer.betThisRound + myPlayer.chips : 0;
+  const canRaise = isMyTurn && maxAffordable > state.currentBet;
+  const canAllIn = isMyTurn && !!myPlayer && myPlayer.chips > 0;
+  const callAmount = myPlayer ? Math.min(toCall, myPlayer.chips) : 0;
+  const raiseMin = Math.min(minRaiseTo, maxAffordable);
+  const raiseMax = maxAffordable;
+
+  // 初始化加注金额（hooks 在 return 之前）
+  useEffect(() => {
+    if (showRaiseSlider && canRaise) {
+      setRaiseAmount(raiseMin);
+    }
+  }, [showRaiseSlider, canRaise, raiseMin]);
+
+  if (!account) return null;
+
+  // 非我回合
   if (!myPlayer || !isMyTurn) {
-    // 如果我还在牌局中，显示"等待"提示
     const me = state.seats.find((s) => s.player?.id === account.id)?.player;
     if (me && me.inHand && !me.hasFolded && !me.isAllIn) {
       return (
@@ -34,26 +52,6 @@ export function ActionPanel({ state }: ActionPanelProps) {
     return null;
   }
 
-  const toCall = state.currentBet - myPlayer.betThisRound;
-  const canCheck = toCall <= 0;
-  const canCall = toCall > 0;
-  const minRaiseTo = state.currentBet + state.minRaise;
-  const maxAffordable = myPlayer.betThisRound + myPlayer.chips;
-  const canRaise = maxAffordable > state.currentBet;
-  const canAllIn = myPlayer.chips > 0;
-  const callAmount = Math.min(toCall, myPlayer.chips);
-
-  // 加注金额范围
-  const raiseMin = Math.min(minRaiseTo, maxAffordable);
-  const raiseMax = maxAffordable;
-
-  // 初始化加注金额
-  useEffect(() => {
-    if (showRaiseSlider) {
-      setRaiseAmount(raiseMin);
-    }
-  }, [showRaiseSlider, raiseMin]);
-
   const handleFold = () => takeAction({ type: 'fold' });
   const handleCheck = () => takeAction({ type: 'check' });
   const handleCall = () => takeAction({ type: 'call' });
@@ -63,8 +61,7 @@ export function ActionPanel({ state }: ActionPanelProps) {
     setShowRaiseSlider(false);
   };
 
-  // 快捷加注：按底池比例
-  const potForRaise = state.currentPot + myPlayer.betThisRound; // 含自己已下注的底池估算
+  const potForRaise = state.currentPot + myPlayer.betThisRound;
   const quickRaises = [
     { label: 'MIN', value: raiseMin },
     { label: '1/2池', value: Math.min(Math.round(potForRaise * 0.5) + state.currentBet, raiseMax) },

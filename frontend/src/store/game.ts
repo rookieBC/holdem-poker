@@ -21,6 +21,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ subscribed: true });
     subscriptions.onGameState((s) => set({ state: s }));
     subscriptions.onGameEvent((e) => set({ lastEvent: e }));
+    // 当房间状态推送且不含 gameState（局已结束），清除游戏状态
+    subscriptions.onRoomState((room) => {
+      if (!room.gameState) set({ state: null });
+    });
   },
 
   setState: (state) => set({ state }),
