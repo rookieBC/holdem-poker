@@ -1,8 +1,6 @@
 import { CommunityArea } from './CommunityArea';
 import { SeatSlot } from './SeatSlot';
-import { PixelCard } from './PixelCard';
 import type { GameState } from '@holdem/shared';
-import { GameStage } from '@holdem/shared';
 
 interface PokerTableProps {
   state: GameState;
@@ -11,31 +9,31 @@ interface PokerTableProps {
 
 /**
  * 牌桌布局（以我为中心）：
- *   公共牌 + 底池 在上半部（top:40%）
- *   我的底牌 在下半部（top:72%，座位正上方）
- *   我的座位 在最底部（top:92%）
- * 互不重叠。
+ * 自己的座位(含大底牌)在底部中央，其他玩家围绕。
+ * 公共牌+底池在牌桌中上部。
+ * 底牌随座位走(在信息卡正上方)，不再单独绝对定位。
  */
 
+// 6座：底部用 bottom 定位(从底边算)，其他用 top
 const POS_6 = [
-  { top: '92%', left: '50%' },   // 0 自己（最底部）
-  { top: '80%', left: '8%' },    // 1 左下
-  { top: '40%', left: '4%' },    // 2 左上
-  { top: '5%', left: '50%' },    // 3 顶部
-  { top: '40%', left: '96%' },   // 4 右上
-  { top: '80%', left: '92%' },   // 5 右下
+  { bottom: '2%', left: '50%' },   // 0 自己(底部,含底牌整体)
+  { bottom: '8%', left: '8%' },    // 1 左下
+  { top: '38%', left: '4%' },     // 2 左上
+  { top: '4%', left: '50%' },     // 3 顶部
+  { top: '38%', left: '96%' },    // 4 右上
+  { bottom: '8%', left: '92%' },   // 5 右下
 ];
 
 const POS_9 = [
-  { top: '92%', left: '50%' },   // 0 自己
-  { top: '78%', left: '12%' },   // 1 左下
-  { top: '46%', left: '3%' },    // 2 左侧
-  { top: '10%', left: '14%' },   // 3 顶部偏左
-  { top: '4%', left: '50%' },    // 4 顶部中央
-  { top: '10%', left: '86%' },   // 5 顶部偏右
-  { top: '46%', left: '97%' },   // 6 右侧
-  { top: '78%', left: '88%' },   // 7 右下
-  { top: '78%', left: '70%' },   // 8 备用
+  { bottom: '2%', left: '50%' },   // 0 自己
+  { bottom: '8%', left: '12%' },   // 1 左下
+  { top: '44%', left: '3%' },     // 2 左侧
+  { top: '8%', left: '14%' },     // 3 顶部偏左
+  { top: '3%', left: '50%' },     // 4 顶部中央
+  { top: '8%', left: '86%' },     // 5 顶部偏右
+  { top: '44%', left: '97%' },    // 6 右侧
+  { bottom: '8%', left: '88%' },   // 7 右下
+  { bottom: '8%', left: '70%' },   // 8 备用
 ];
 
 export function PokerTable({ state, myPlayerId }: PokerTableProps) {
@@ -52,22 +50,19 @@ export function PokerTable({ state, myPlayerId }: PokerTableProps) {
     .map((seat, realIndex) => ({ seat, realIndex, displayPos: getDisplayPos(realIndex) }))
     .sort((a, b) => a.displayPos - b.displayPos);
 
-  const mySeat = state.seats[mySeatIndex];
-  const myPlayer = mySeat?.player;
-  const myHoleCards = myPlayer?.holeCards;
-
   return (
     <div className="poker-table">
       {/* 座位环排 */}
       {renderedSeats.map(({ seat, realIndex, displayPos }) => {
         const pos = positions[displayPos] ?? positions[0];
         const isMe = seat.player?.id === myPlayerId;
+        // bottom 定位的用 translate(-50%, 0)从底部对齐，top 定位的用 translate(-50%, -50%)居中
+        const useBottom = 'bottom' in pos;
+        const style: React.CSSProperties = useBottom
+          ? { bottom: pos.bottom, left: pos.left, transform: 'translate(-50%, 0)' }
+          : { top: (pos as { top: string }).top, left: pos.left, transform: 'translate(-50%, -50%)' };
         return (
-          <div
-            key={realIndex}
-            className="seat-slot"
-            style={{ top: pos.top, left: pos.left, transform: 'translate(-50%, -50%)' }}
-          >
+          <div key={realIndex} className="seat-slot" style={style}>
             <SeatSlot
               seat={seat}
               myPlayerId={myPlayerId}
@@ -76,28 +71,16 @@ export function PokerTable({ state, myPlayerId }: PokerTableProps) {
               isDealer={realIndex === state.dealerIndex}
               isSmallBlind={realIndex === state.smallBlindIndex}
               isBigBlind={realIndex === state.bigBlindIndex}
-              hideHoleCards={isMe}
+              isMySeat={isMe}
             />
           </div>
         );
       })}
 
-      {/* 公共牌 + 底池（上半部） */}
+      {/* 公共牌 + 底池（中上部） */}
       <div className="table-content-top">
         <CommunityArea state={state} />
       </div>
-
-      {/* 我的大底牌（下半部，座位正上方） */}
-      {myHoleCards && myHoleCards.length > 0 && (
-        <div className="my-hole-cards-zone">
-          <span className="font-screen text-[9px] glow-green mb-1">▼ 我的底牌</span>
-          <div className="flex gap-3 justify-center">
-            {myHoleCards.map((c) => (
-              <PixelCard key={c.id} card={c} revealed size="md" />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

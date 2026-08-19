@@ -336,7 +336,7 @@ body {
 /* 牌桌中央区域（公共牌 + 底池） */
 .table-content-top {
   position: absolute;
-  top: 38%;
+  top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
@@ -348,17 +348,7 @@ body {
 }
 
 /* 我的大底牌区（下半部，座位正上方） */
-.my-hole-cards-zone {
-  position: absolute;
-  top: 74%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  z-index: 2;
-}
+/* my-hole-cards-zone deprecated */
 
 /* 公共牌区 */
 .community-area {
@@ -480,6 +470,8 @@ body {
   flex-direction: column;
   gap: 8px;
   padding: 10px 16px;
+  max-width: 640px;
+  width: 100%;
   background: rgba(10, 10, 24, 0.85);
   border: 2px solid var(--neon-yellow);
   box-shadow: 0 0 12px rgba(255, 230, 0, 0.3);
@@ -499,7 +491,9 @@ body {
 .raise-slider {
   -webkit-appearance: none;
   appearance: none;
-  width: 180px;
+  width: 120px;
+  min-width: 80px;
+  flex: 1;
   height: 8px;
   background: #1a1a3a;
   border: 2px solid var(--neon-green);

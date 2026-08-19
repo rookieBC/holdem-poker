@@ -10,8 +10,8 @@ interface SeatSlotProps {
   isDealer: boolean;
   isSmallBlind: boolean;
   isBigBlind: boolean;
-  /** 是否显示底牌（自己=单独大底牌区，座位上不重复显示） */
-  hideHoleCards?: boolean;
+  /** 自己的座位：底牌用大尺寸，放在信息卡正上方 */
+  isMySeat?: boolean;
 }
 
 const ACTION_LABEL: Record<ActionType, string> = {
@@ -30,11 +30,10 @@ export function SeatSlot({
   isDealer,
   isSmallBlind,
   isBigBlind,
-  hideHoleCards = false,
+  isMySeat = false,
 }: SeatSlotProps) {
   const p = seat.player;
 
-  // 空座
   if (!p) {
     return (
       <div className="player-card seat-empty-table">
@@ -45,7 +44,7 @@ export function SeatSlot({
 
   const isMe = p.id === myPlayerId;
   const isShowdown = stage === GameStage.Showdown || stage === GameStage.Settled;
-  const showHoleCards = (isMe || (isShowdown && !p.hasFolded)) && !hideHoleCards;
+  const showHoleCards = isMe || (isShowdown && !p.hasFolded);
 
   const cardClass =
     'player-card ' +
@@ -53,13 +52,16 @@ export function SeatSlot({
     (p.hasFolded ? 'is-folded ' : '') +
     (p.isAllIn ? 'is-allin ' : '');
 
+  // 自己的底牌用大尺寸(md)，对手用小尺寸(sm)
+  const holeCardSize = isMySeat ? 'md' : 'sm';
+
   return (
     <div className="flex flex-col items-center gap-1">
-      {/* 底牌（自己的不在座位显示，用单独大底牌区） */}
+      {/* 底牌：在信息卡正上方，自己用大尺寸 */}
       {showHoleCards && p.holeCards && p.holeCards.length > 0 ? (
         <div className="hole-cards-row">
           {p.holeCards.map((c) => (
-            <PixelCard key={c.id} card={c} revealed={showHoleCards} size="sm" />
+            <PixelCard key={c.id} card={c} revealed={showHoleCards} size={holeCardSize} />
           ))}
         </div>
       ) : null}
