@@ -109,7 +109,7 @@ export function RoomPage() {
             </div>
           </>
         ) : (
-          <>
+          <div className="flex-1 overflow-auto p-4 md:p-6 flex flex-col items-center justify-center gap-4">
             {/* 未开局：座位选择 */}
             <div className="pixel-panel p-6 w-full max-w-3xl">
               <h2 className="font-screen text-sm glow-purple mb-4 text-center">
@@ -201,7 +201,7 @@ export function RoomPage() {
                 </p>
               )}
             </div>
-          </>
+          </div>
         )}
       </div>
 
