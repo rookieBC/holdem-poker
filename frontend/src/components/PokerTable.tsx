@@ -92,7 +92,7 @@ export function PokerTable({ state, myPlayerId }: PokerTableProps) {
             {isShowdown && <span className="font-screen text-[10px] glow-green mb-1">我的底牌</span>}
             <div className="flex gap-3 justify-center">
               {myHoleCards.map((c) => (
-                <PixelCard key={c.id} card={c} revealed size="lg" />
+                <PixelCard key={c.id} card={c} revealed size="md" />
               ))}
             </div>
           </div>

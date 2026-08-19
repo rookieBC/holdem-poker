@@ -101,7 +101,7 @@ export function RoomPage() {
         {inGame && activeGameState ? (
           /* 游戏进行中：牌桌占满上方，操作面板在下方独立区域 */
           <>
-            <div className="flex-1 relative min-h-[400px]">
+            <div className="flex-1 relative min-h-[520px]">
               <PokerTable state={activeGameState} myPlayerId={account.id} />
             </div>
             <div className="shrink-0 px-2 pb-2">
