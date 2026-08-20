@@ -260,7 +260,8 @@ export function settleShowdown(state: GameState): { state: GameState; winnings: 
       const total = allPlayers.reduce((sum, p) => sum + p.totalCommitted, 0);
       winnings.set(winner.id, total);
       winner.chips += total;
-      winnersList.push({ playerId: winner.id, username: winner.username, amount: total, handName: null });
+      const netWin = total - winner.totalCommitted;
+      winnersList.push({ playerId: winner.id, username: winner.username, amount: netWin, handName: null });
     }
     s.stage = GameStage.Settled;
     s.winners = winnersList;
@@ -307,14 +308,15 @@ export function settleShowdown(state: GameState): { state: GameState; winnings: 
     }
   });
 
-  // 构建赢家列表
+  // 构建赢家列表（amount = 净收益 = 分得底池 - 自己投入）
   for (const [pid, amt] of winnings) {
     const p = allPlayers.find((x) => x.id === pid);
     const evalEntry = evalsByPlayerId.get(pid);
+    const netWin = amt - (p?.totalCommitted ?? 0);
     winnersList.push({
       playerId: pid,
       username: p?.username ?? '',
-      amount: amt,
+      amount: netWin,
       handName: evalEntry?.eval.name ?? null,
     });
   }
