@@ -18,9 +18,9 @@ interface PokerTableProps {
 const POS_6 = [
   { bottom: '2%', left: '50%' },   // 0 自己(底部,含底牌整体)
   { bottom: '8%', left: '8%' },    // 1 左下
-  { top: '38%', left: '4%' },     // 2 左上
+  { top: '34%', left: '2%' },     // 2 左上
   { top: '4%', left: '50%' },     // 3 顶部
-  { top: '38%', left: '96%' },    // 4 右上
+  { top: '34%', left: '98%' },    // 4 右上
   { bottom: '8%', left: '92%' },   // 5 右下
 ];
 
