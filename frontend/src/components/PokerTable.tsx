@@ -75,6 +75,7 @@ export function PokerTable({ state, myPlayerId }: PokerTableProps) {
               isMySeat={isMe}
               isWinner={!!winnerInfo}
               winAmount={winnerInfo?.amount}
+              actionDeadline={realIndex === state.currentPlayerIndex ? state.actionDeadline : null}
             />
           </div>
         );

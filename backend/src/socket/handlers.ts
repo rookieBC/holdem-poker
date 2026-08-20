@@ -9,6 +9,94 @@ import { logger } from '../lib/logger.js';
 
 const socketRoomMap = new Map<string, string>();
 
+// ============================================================
+// 行动计时器：超时自动弃牌
+// ============================================================
+const ACTION_TIMEOUT_MS = 30_000; // 30秒 // 30秒
+const roomTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+/** 设置房间超时定时器，超时后自动对当前玩家弃牌 */
+function setActionTimer(io: Server, roomId: string): void {
+  clearActionTimer(roomId);
+  const timer = setTimeout(() => {
+    handleActionTimeout(io, roomId);
+  }, ACTION_TIMEOUT_MS + 500); // 多500ms容差，避免和客户端抢
+  roomTimers.set(roomId, timer);
+}
+
+/** 清除房间超时定时器 */
+function clearActionTimer(roomId: string): void {
+  const t = roomTimers.get(roomId);
+  if (t) {
+    clearTimeout(t);
+    roomTimers.delete(roomId);
+  }
+}
+
+/** 超时处理：对当前行动玩家执行弃牌 */
+function handleActionTimeout(io: Server, roomId: string): void {
+  roomTimers.delete(roomId);
+  const room = getRoom(roomId);
+  if (!room || !room.gameState) return;
+  const state = room.gameState;
+  // 已结算则不处理
+  if (state.stage === 'settled' || state.stage === 'showdown') return;
+  // deadline 还没到则不处理（可能被重置过）
+  if (state.actionDeadline && Date.now() < state.actionDeadline) return;
+
+  const seat = state.seats[state.currentPlayerIndex];
+  const player = seat?.player;
+  if (!player) return;
+
+  logger.info(`房间 ${room.name} 玩家 ${player.username} 超时弃牌`);
+
+  // 执行弃牌
+  const result = processAction(room, player.id, { type: 'fold' });
+  if (!result.ok) return;
+
+  // 广播弃牌事件
+  io.to(room.id).emit(ServerEvent.GameEvent, {
+    type: 'fold',
+    data: { playerId: player.id, action: { type: 'fold' }, timeout: true },
+  });
+  broadcastGameState(io, room, room.id);
+
+  // 阶段切换事件
+  if (result.newStage && room.gameState) {
+    emitStageEvents(io, room.id, result.newStage);
+  }
+
+  // 结算处理
+  if (result.newStage === 'settled' && room.gameState) {
+    syncAccountsAfterSettle(room);
+    broadcastGameState(io, room, room.id);
+  } else {
+    setActionTimer(io, roomId);
+  }
+}
+
+/** 根据新阶段广播翻牌/摊牌/胜利动画事件 */
+function emitStageEvents(io: Server, roomId: string, stage: string): void {
+  const room = getRoom(roomId);
+  if (!room || !room.gameState) return;
+  if (stage === 'flop' || stage === 'turn' || stage === 'river') {
+    io.to(room.id).emit(ServerEvent.GameEvent, {
+      type: 'deal-community',
+      data: { stage, count: stage === 'flop' ? 3 : 1 },
+    });
+  } else if (stage === 'showdown') {
+    io.to(room.id).emit(ServerEvent.GameEvent, { type: 'showdown', data: {} });
+  } else if (stage === 'settled') {
+    if (room.gameState.stage !== 'showdown') {
+      io.to(room.id).emit(ServerEvent.GameEvent, { type: 'showdown', data: {} });
+    }
+    io.to(room.id).emit(ServerEvent.GameEvent, {
+      type: 'win',
+      data: { winners: room.gameState.winners ?? [] },
+    });
+  }
+}
+
 function getAccount(socket: Socket): Account | null {
   return (socket.data.account as Account) ?? null;
 }
@@ -140,6 +228,7 @@ export function registerSocketHandlers(io: Server): void {
       socket.leave(payload.roomId);
       socketRoomMap.delete(socket.id);
       ack?.();
+      clearActionTimer(payload.roomId);
       // 无人则销毁房间
       if (room && shouldDestroyRoom(io, room.id)) {
         deleteRoom(room.id);
@@ -213,12 +302,18 @@ export function registerSocketHandlers(io: Server): void {
       const result = startGame(room);
       if (!result.ok) { ack?.({ error: result.reason }); return; }
       ack?.({ ok: true });
+      // 设置第一个行动者的 deadline
+      if (room.gameState) {
+        room.gameState.actionDeadline = Date.now() + ACTION_TIMEOUT_MS;
+      }
       broadcastGameState(io, room, room.id);
       // 广播发底牌动画事件
       io.to(room.id).emit(ServerEvent.GameEvent, {
         type: 'deal-hole',
         data: {},
       });
+      // 启动行动计时器
+      setActionTimer(io, room.id);
       logger.info(`${acc.username} 发起开局`);
     });
 
@@ -227,6 +322,8 @@ export function registerSocketHandlers(io: Server): void {
       const acc = getAccount(socket);
       const room = getRoom(payload.roomId);
       if (!room || !acc) { ack?.({ error: '无效请求' }); return; }
+      // 玩家行动时清除超时定时器
+      clearActionTimer(room.id);
       // 记录动作前的阶段，用于判断是否发生阶段切换
       const prevStage = room.gameState?.stage;
       const result = processAction(room, acc.id, payload.action);
@@ -241,41 +338,29 @@ export function registerSocketHandlers(io: Server): void {
           data: { playerId: acc.id, action: payload.action },
         });
       }
-      broadcastGameState(io, room, room.id);
 
-      // 仅当阶段真正切换时才广播翻牌/摊牌/胜利动画事件
+      // 阶段切换时广播翻牌/摊牌/胜利动画事件
       if (result.newStage && result.newStage !== prevStage && room.gameState) {
-        const stage = result.newStage;
-        if (stage === 'flop' || stage === 'turn' || stage === 'river') {
-          io.to(room.id).emit(ServerEvent.GameEvent, {
-            type: 'deal-community',
-            data: { stage, count: stage === 'flop' ? 3 : 1 },
-          });
-        } else if (stage === 'showdown') {
-          io.to(room.id).emit(ServerEvent.GameEvent, {
-            type: 'showdown',
-            data: {},
-          });
-        } else if (stage === 'settled') {
-          // 若 settled 前未经过独立 showdown 阶段（如仅剩一人），先补 showdown 再 win
-          if (prevStage !== 'showdown') {
-            io.to(room.id).emit(ServerEvent.GameEvent, {
-              type: 'showdown',
-              data: {},
-            });
-          }
-          io.to(room.id).emit(ServerEvent.GameEvent, {
-            type: 'win',
-            data: { winners: room.gameState.winners ?? [] },
-          });
-        }
+        emitStageEvents(io, room.id, result.newStage);
       }
+
+      // 为下一个行动者设置 deadline
+      if (room.gameState && result.newStage !== 'settled') {
+        room.gameState.actionDeadline = Date.now() + ACTION_TIMEOUT_MS;
+      } else if (room.gameState) {
+        room.gameState.actionDeadline = null;
+      }
+
+      broadcastGameState(io, room, room.id);
 
       // 结算后只同步账户筹码，不自动清理（等待房主发起 game:next）
       if (result.newStage === 'settled' && room.gameState) {
         syncAccountsAfterSettle(room);
-        // 广播更新后的筹码（仍保持 settled 状态，前端显示结算画面）
         broadcastGameState(io, room, room.id);
+        clearActionTimer(room.id);
+      } else {
+        // 未结算，启动下一轮计时器
+        setActionTimer(io, room.id);
       }
     });
 
@@ -288,6 +373,7 @@ export function registerSocketHandlers(io: Server): void {
       if (!room.gameState || room.gameState.stage !== 'settled') {
         ack?.({ error: '当前无法开始下一局' }); return;
       }
+      clearActionTimer(room.id);
       endHand(room, getAccountById);
       broadcastRoomState(io, room, room.id);
       logger.info(`${acc.username} 发起下一局`);
@@ -309,6 +395,7 @@ export function registerSocketHandlers(io: Server): void {
             const newHost = transferHost(room);
             if (newHost) logger.info(`房间 ${room.name} 房主转让给 ${newHost} (断线)`);
           }
+          clearActionTimer(room.id);
           if (shouldDestroyRoom(io, room.id)) {
             deleteRoom(room.id);
             logger.info('房间已销毁(无人断开): ' + room.name);

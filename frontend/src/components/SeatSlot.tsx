@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { PixelCard } from './PixelCard';
 import { AnimateNumber } from './AnimateNumber';
+import { ActionTimer } from './ActionTimer';
 import type { Seat, PublicPlayer, ActionType } from '@holdem/shared';
 import { GameStage } from '@holdem/shared';
 
@@ -18,6 +19,8 @@ interface SeatSlotProps {
   isWinner?: boolean;
   /** 赢得的筹码（isWinner 时有值） */
   winAmount?: number;
+  /** 行动截止时间戳（仅当前行动玩家有值） */
+  actionDeadline?: number | null;
 }
 
 const ACTION_LABEL: Record<ActionType, string> = {
@@ -39,6 +42,7 @@ export function SeatSlot({
   isMySeat = false,
   isWinner = false,
   winAmount,
+  actionDeadline,
 }: SeatSlotProps) {
   const p = seat.player;
 
@@ -129,7 +133,9 @@ export function SeatSlot({
             )}
 
             {p.hasFolded && <span className="font-screen text-[9px] text-neon-red">弃牌</span>}
-            {isActive && <span className="font-screen text-[9px] text-neon-yellow blink">▶ 行动中</span>}
+            {isActive && actionDeadline && (
+              <ActionTimer deadline={actionDeadline} size={44} />
+            )}
           </>
         )}
       </div>
