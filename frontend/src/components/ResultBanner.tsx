@@ -4,20 +4,29 @@ import { useGameStore } from '../store/game';
 import { useAccountStore } from '../store/account';
 import type { WinnerInfo } from '@holdem/shared';
 
-interface ResultBannerProps {
-  /** 本局开始前的筹码（用于算输赢差额），可选 */
-}
-
 /**
- * 胜负横幅：结算时弹出 YOU WIN / YOU LOSE，几秒后淡出。
- * 消费 game store 的 lastEvent，在 win 事件时触发。
+ * 胜负横幅：结算时弹出 YOU WIN / YOU LOSE。
+ * - win 事件触发显示
+ * - 下一局开始（deal-hole）或游戏状态清除时自动消失
  */
-export function ResultBanner({}: ResultBannerProps) {
+export function ResultBanner() {
   const lastEvent = useGameStore((s) => s.lastEvent);
+  const gameState = useGameStore((s) => s.state);
   const account = useAccountStore((s) => s.account);
   const [result, setResult] = useState<{ isWin: boolean; amount: number; handName: string | null } | null>(null);
 
   useEffect(() => {
+    // 游戏状态被清除（回到座位页）时，隐藏横幅
+    if (!gameState) {
+      setResult(null);
+      return;
+    }
+    // 新一局开始（deal-hole）时，隐藏上一局结果横幅
+    if (lastEvent && lastEvent.type === 'deal-hole') {
+      setResult(null);
+      return;
+    }
+    // win 事件触发显示
     if (!lastEvent || lastEvent.type !== 'win') return;
     if (!account) return;
 
@@ -28,15 +37,10 @@ export function ResultBanner({}: ResultBannerProps) {
     if (myWin) {
       setResult({ isWin: true, amount: myWin.amount, handName: myWin.handName });
     } else {
-      // 输了：赢家信息用于展示对手牌型，输的金额前端无法精确得知（不传），显示 YOU LOSE
       const winnerHand = winners[0]?.handName ?? null;
       setResult({ isWin: false, amount: 0, handName: winnerHand });
     }
-
-    // 3.5 秒后淡出
-    const timer = setTimeout(() => setResult(null), 3500);
-    return () => clearTimeout(timer);
-  }, [lastEvent, account]);
+  }, [lastEvent, account, gameState]);
 
   return (
     <AnimatePresence>
