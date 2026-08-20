@@ -37,9 +37,8 @@ COPY backend/ ./backend/
 # 复制前端构建产物
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
-# 数据持久化目录
+# 数据持久化目录（持久化由 Railway Volume 挂载，挂载点 /app/backend/data）
 RUN mkdir -p /app/backend/data
-VOLUME /app/backend/data
 
 ENV PORT=3000
 ENV CLIENT_URL="*"
