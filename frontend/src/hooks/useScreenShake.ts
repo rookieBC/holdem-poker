@@ -3,18 +3,20 @@ import { useGameStore } from '../store/game';
 
 /**
  * 震屏强度分级
- * - light: 翻牌、普通下注（轻微晃动）
- * - medium: 大额加注（明显震感）
- * - heavy: All-in、胜负揭晓（强烈震屏）
+ * - medium: 加注（明显震感）
+ * - heavy: All-in、摊牌、胜利揭晓（强烈震屏）
+ *
+ * 设计原则：震屏是"冲击力"工具，只在真正有戏剧张力的瞬间使用。
+ * 常规操作（call/check/翻牌/弃牌/发牌）不震屏，避免麻木。
  */
-type ShakeIntensity = 'light' | 'medium' | 'heavy';
+type ShakeIntensity = 'medium' | 'heavy';
 
 interface ShakeConfig {
   intensity: ShakeIntensity;
   durationMs: number;
 }
 
-/** 根据事件类型 + 动作数据判定震屏强度 */
+/** 根据事件类型 + 动作数据判定震屏强度，常规操作返回 null（不震） */
 function resolveShake(event: { type: string; data: Record<string, unknown> }): ShakeConfig | null {
   const action = event.data?.action as { type?: string; amount?: number } | undefined;
 
@@ -22,22 +24,18 @@ function resolveShake(event: { type: string; data: Record<string, unknown> }): S
     case 'bet':
       // All-in → heavy
       if (action?.type === 'all-in') return { intensity: 'heavy', durationMs: 600 };
-      // raise → medium，大额 raise 更强
+      // raise → medium，大额 raise 升级为 heavy
       if (action?.type === 'raise') {
         const amt = action.amount ?? 0;
         return { intensity: amt >= 500 ? 'heavy' : 'medium', durationMs: 450 };
       }
-      // call/check → light
-      return { intensity: 'light', durationMs: 250 };
+      // call/check 不震屏
+      return null;
 
     case 'fold':
-      return null; // 弃牌不震屏，用其他动效
-
     case 'deal-hole':
-      return null; // 发底牌不震屏
-
     case 'deal-community':
-      return { intensity: 'light', durationMs: 350 };
+      return null; // 常规操作不震屏
 
     case 'showdown':
       return { intensity: 'heavy', durationMs: 800 };
@@ -51,7 +49,6 @@ function resolveShake(event: { type: string; data: Record<string, unknown> }): S
 }
 
 const INTENSITY_CLASS: Record<ShakeIntensity, string> = {
-  light: 'shake-light',
   medium: 'shake-medium',
   heavy: 'shake-heavy',
 };
@@ -76,7 +73,7 @@ export function useScreenShake() {
     // 清除上一次未结束的震动
     if (timerRef.current) {
       clearTimeout(timerRef.current);
-      el.classList.remove('shake-light', 'shake-medium', 'shake-heavy');
+      el.classList.remove('shake-medium', 'shake-heavy');
     }
 
     const cls = INTENSITY_CLASS[cfg.intensity];
