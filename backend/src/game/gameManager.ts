@@ -43,6 +43,13 @@ export function startGame(room: Room): { ok: boolean; reason?: string } {
   if (readyCount < room.config.minPlayers) {
     return { ok: false, reason: '还有玩家未准备' };
   }
+  // 兜底校验：已准备的玩家筹码必须够大盲注
+  const notEnough = seatedPlayers.filter(
+    (s) => s.player!.isReady && s.player!.chips < room.config.bigBlind,
+  );
+  if (notEnough.length > 0) {
+    return { ok: false, reason: `${notEnough[0].player!.username} 筹码不足` };
+  }
 
   const prevDealer = (room as Room & { _lastDealer?: number })._lastDealer ?? -1;
   const dealerIndex = nextSeatedIndex(room.seats, prevDealer);

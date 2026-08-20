@@ -174,6 +174,10 @@ export function registerSocketHandlers(io: Server): void {
       if (room.gameState) { ack?.({ error: '游戏进行中' }); return; }
       const seat = room.seats.find((s) => s.player?.id === acc.id);
       if (!seat || !seat.player) { ack?.({ error: '请先坐下' }); return; }
+      // 筹码不足大盲注时不能准备
+      if (seat.player.chips < room.config.bigBlind) {
+        ack?.({ error: `筹码不足，至少需要 ${room.config.bigBlind} 筹码` }); return;
+      }
       seat.player.isReady = !seat.player.isReady;
       ack?.({ ok: true, ready: seat.player.isReady });
       broadcastRoomState(io, room, room.id);
