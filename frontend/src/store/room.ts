@@ -47,6 +47,8 @@ interface RoomStore {
   standUp: () => Promise<void>;
   toggleReady: () => Promise<boolean>;
   startGame: () => Promise<boolean>;
+  /** 结算后发起下一局（房主） */
+  nextGame: () => Promise<boolean>;
   /** 发送下注动作 */
   takeAction: (action: PlayerAction) => Promise<boolean>;
   setRoom: (room: Room | null) => void;
@@ -139,6 +141,18 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
     const room = get().currentRoom;
     if (!room) return false;
     const res = await api.gameStart(room.id);
+    if (res && 'error' in res) {
+      setErrorWithExpiry(set, res.error);
+      return false;
+    }
+    return true;
+  },
+
+  nextGame: async () => {
+    clearError(set);
+    const room = get().currentRoom;
+    if (!room) return false;
+    const res = await api.gameNext(room.id);
     if (res && 'error' in res) {
       setErrorWithExpiry(set, res.error);
       return false;

@@ -25,6 +25,7 @@ export function RoomPage() {
     standUp,
     toggleReady,
     startGame,
+    nextGame,
     setRoom,
     subscribe,
     refreshLobby,
@@ -109,7 +110,22 @@ export function RoomPage() {
               <PokerTable state={activeGameState} myPlayerId={account.id} />
             </div>
             <div className="shrink-0 px-2 pb-2 w-full flex justify-center">
-              <ActionPanel state={activeGameState} />
+              {activeGameState.stage === 'settled' ? (
+                <div className="next-round-panel">
+                  <span className="font-screen text-xs text-gray-400">本局结束</span>
+                  {isHost ? (
+                    <button className="pixel-btn pixel-btn-green text-xs" onClick={nextGame}>
+                      ▶ 下一局
+                    </button>
+                  ) : (
+                    <span className="font-mono text-sm text-gray-500 blink">
+                      等待房主开始下一局…
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <ActionPanel state={activeGameState} />
+              )}
             </div>
           </>
         ) : (

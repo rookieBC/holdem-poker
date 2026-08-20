@@ -250,13 +250,27 @@ export function registerSocketHandlers(io: Server): void {
         }
       }
 
+      // 结算后只同步账户筹码，不自动清理（等待房主发起 game:next）
       if (result.newStage === 'settled' && room.gameState) {
         syncAccountsAfterSettle(room);
-        setTimeout(() => {
-          endHand(room, getAccountById);
-          broadcastRoomState(io, room, room.id);
-        }, 4000);
+        // 广播更新后的筹码（仍保持 settled 状态，前端显示结算画面）
+        broadcastGameState(io, room, room.id);
       }
+    });
+
+    // 下一局：房主发起，清理上局并回到座位准备阶段
+    socket.on(ClientEvent.GameNext, (payload: { roomId: string }, ack) => {
+      const acc = getAccount(socket);
+      const room = getRoom(payload.roomId);
+      if (!room || !acc) { ack?.({ error: '无效请求' }); return; }
+      // 只有 settled 状态才能发起下一局
+      if (!room.gameState || room.gameState.stage !== 'settled') {
+        ack?.({ error: '当前无法开始下一局' }); return;
+      }
+      endHand(room, getAccountById);
+      broadcastRoomState(io, room, room.id);
+      logger.info(`${acc.username} 发起下一局`);
+      ack?.({ ok: true });
     });
 
     // 断开

@@ -202,6 +202,7 @@ export enum ClientEvent {
   SeatStand = 'seat:stand',       // 站起
   ReadyToggle = 'ready:toggle',   // 准备/取消准备
   GameStart = 'game:start',       // 房主开局
+  GameNext = 'game:next',         // 下一局（结算后清理，房主发起）
   Action = 'action',             // 下注动作
   ItemUse = 'item:use',           // 使用道具
 }

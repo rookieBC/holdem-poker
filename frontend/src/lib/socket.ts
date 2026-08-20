@@ -91,6 +91,10 @@ export const api = {
   /** 下注动作 */
   action: (roomId: string, action: PlayerAction) =>
     emitAck<{ ok: boolean } | { error: string }>(ClientEvent.Action, { roomId, action }),
+
+  /** 下一局（结算后房主发起） */
+  gameNext: (roomId: string) =>
+    emitAck<{ ok: boolean } | { error: string }>(ClientEvent.GameNext, { roomId }),
 };
 
 function emitAck<T>(event: ClientEvent, payload: unknown = undefined): Promise<T> {
