@@ -67,6 +67,22 @@ function shouldDestroyRoom(io: Server, roomId: string): boolean {
   return !hasConnection;
 }
 
+/**
+ * 房主离开时转让房主：优先转给已坐下的玩家，其次转给房间内任意玩家。
+ * 若房间无人则不处理（由 shouldDestroyRoom 销毁）。
+ * 返回新的房主 playerId，无人可转则返回 null。
+ */
+function transferHost(room: Room): string | null {
+  // 优先：已坐下的玩家
+  const seated = room.seats.find((s) => s.player !== null);
+  if (seated?.player) {
+    room.hostPlayerId = seated.player.id;
+    return seated.player.id;
+  }
+  // 没有 seated 玩家时，不转让（房间将在无连接时销毁）
+  return null;
+}
+
 export function registerSocketHandlers(io: Server): void {
   io.on('connection', (socket: Socket) => {
     logger.info(`Socket 连接: ${socket.id}`);
@@ -115,6 +131,11 @@ export function registerSocketHandlers(io: Server): void {
       if (room && acc) {
         const seat = room.seats.find((s) => s.player?.id === acc.id);
         if (seat) seat.player = null;
+        // 房主离开时转让房主
+        if (room.hostPlayerId === acc.id) {
+          const newHost = transferHost(room);
+          if (newHost) logger.info(`房间 ${room.name} 房主转让给 ${newHost}`);
+        }
       }
       socket.leave(payload.roomId);
       socketRoomMap.delete(socket.id);
@@ -283,6 +304,11 @@ export function registerSocketHandlers(io: Server): void {
         if (room) {
           const seat = room.seats.find((s) => s.player?.id === acc.id);
           if (seat && !room.gameState) seat.player = null;
+          // 房主断开时转让房主
+          if (room.hostPlayerId === acc.id) {
+            const newHost = transferHost(room);
+            if (newHost) logger.info(`房间 ${room.name} 房主转让给 ${newHost} (断线)`);
+          }
           if (shouldDestroyRoom(io, room.id)) {
             deleteRoom(room.id);
             logger.info('房间已销毁(无人断开): ' + room.name);
