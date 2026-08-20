@@ -1,4 +1,4 @@
-﻿import type { Card, GameState, PublicPlayer, Seat, Pot, RoomConfig } from '../types';
+﻿import type { Card, GameState, PublicPlayer, Seat, Pot, RoomConfig, WinnerInfo } from '../types';
 import { GameStage } from '../types';
 import { deepClone } from './clone.js';
 import { createDeck, shuffle, draw } from './cards.js';
@@ -241,7 +241,7 @@ export function isOnlyOneLeft(state: GameState): boolean {
  * 摊牌结算：评估所有未弃牌玩家的牌力，按底池分配
  * @returns playerId -> 赢得筹码
  */
-export function settleShowdown(state: GameState): { state: GameState; winnings: Map<string, number> } {
+export function settleShowdown(state: GameState): { state: GameState; winnings: Map<string, number>; winners: WinnerInfo[] } {
   const s = deepClone(state);
 
   // 计算底池（边池）
@@ -251,6 +251,7 @@ export function settleShowdown(state: GameState): { state: GameState; winnings: 
   s.pots = calculatePots(allPlayers);
 
   const winnings = new Map<string, number>();
+  const winnersList: WinnerInfo[] = [];
 
   if (isOnlyOneLeft(s)) {
     // 仅剩一人，独得全部底池
@@ -259,9 +260,11 @@ export function settleShowdown(state: GameState): { state: GameState; winnings: 
       const total = allPlayers.reduce((sum, p) => sum + p.totalCommitted, 0);
       winnings.set(winner.id, total);
       winner.chips += total;
+      winnersList.push({ playerId: winner.id, username: winner.username, amount: total, handName: null });
     }
     s.stage = GameStage.Settled;
-    return { state: s, winnings };
+    s.winners = winnersList;
+    return { state: s, winnings, winners: winnersList };
   }
 
   // 评估每个未弃牌玩家的牌
@@ -269,7 +272,10 @@ export function settleShowdown(state: GameState): { state: GameState; winnings: 
   for (const p of allPlayers) {
     if (!p.hasFolded && p.holeCards) {
       const cards = [...p.holeCards, ...s.communityCards];
-      evalsByPlayerId.set(p.id, { eval: evaluateHand(cards), playerId: p.id });
+      const evalResult = evaluateHand(cards);
+      evalsByPlayerId.set(p.id, { eval: evalResult, playerId: p.id });
+      // 填充牌型名供前端摊牌展示
+      p.handName = evalResult.name;
     }
   }
 
@@ -301,9 +307,22 @@ export function settleShowdown(state: GameState): { state: GameState; winnings: 
     }
   });
 
+  // 构建赢家列表
+  for (const [pid, amt] of winnings) {
+    const p = allPlayers.find((x) => x.id === pid);
+    const evalEntry = evalsByPlayerId.get(pid);
+    winnersList.push({
+      playerId: pid,
+      username: p?.username ?? '',
+      amount: amt,
+      handName: evalEntry?.eval.name ?? null,
+    });
+  }
+
   s.stage = GameStage.Settled;
   s.currentPot = 0;
-  return { state: s, winnings };
+  s.winners = winnersList;
+  return { state: s, winnings, winners: winnersList };
 }
 
 /** 下一个行动玩家索引 */

@@ -61,6 +61,7 @@ export function PokerTable({ state, myPlayerId }: PokerTableProps) {
         const style: React.CSSProperties = useBottom
           ? { bottom: pos.bottom, left: pos.left, transform: 'translate(-50%, 0)' }
           : { top: (pos as { top: string }).top, left: pos.left, transform: 'translate(-50%, -50%)' };
+        const winnerInfo = state.winners?.find((w) => w.playerId === seat.player?.id);
         return (
           <div key={realIndex} className="seat-slot" style={style}>
             <SeatSlot
@@ -72,6 +73,8 @@ export function PokerTable({ state, myPlayerId }: PokerTableProps) {
               isSmallBlind={realIndex === state.smallBlindIndex}
               isBigBlind={realIndex === state.bigBlindIndex}
               isMySeat={isMe}
+              isWinner={!!winnerInfo}
+              winAmount={winnerInfo?.amount}
             />
           </div>
         );

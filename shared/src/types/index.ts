@@ -84,6 +84,8 @@ export interface PublicPlayer {
   holeCards: Card[] | null; // 2张
   /** 上一次动作（用于UI展示） */
   lastAction?: PlayerAction | null;
+  /** 摊牌时的牌型名（仅 showdown/settled 阶段有值） */
+  handName?: string | null;
 }
 
 // ---- 底池 ----
@@ -112,6 +114,18 @@ export interface GameState {
   handNumber: number;
   /** 倒计时（行动时限） */
   actionDeadline: number | null;
+  /** 结算后的赢家列表（仅 settled 阶段有值） */
+  winners?: WinnerInfo[];
+}
+
+/** 赢家信息 */
+export interface WinnerInfo {
+  playerId: string;
+  username: string;
+  /** 赢得的筹码 */
+  amount: number;
+  /** 牌型名（仅剩一人弃牌获胜时为 null） */
+  handName: string | null;
 }
 
 // ---- 道具 ----

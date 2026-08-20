@@ -436,6 +436,34 @@ body {
   box-shadow: 0 0 10px rgba(255, 45, 117, 0.5);
 }
 
+/* 赢家座位高亮 */
+.player-card.is-winner {
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 16px var(--neon-yellow), 0 0 32px rgba(255, 230, 0, 0.5);
+  animation: winner-pulse 1.2s ease-in-out infinite;
+}
+@keyframes winner-pulse {
+  0%, 100% { box-shadow: 0 0 16px var(--neon-yellow), 0 0 32px rgba(255, 230, 0, 0.4); }
+  50% { box-shadow: 0 0 24px var(--neon-yellow), 0 0 48px rgba(255, 230, 0, 0.7); }
+}
+
+/* WIN 标签 */
+.win-tag {
+  color: var(--neon-yellow);
+  text-shadow: 0 0 8px var(--neon-yellow), 0 0 16px var(--neon-yellow);
+  padding: 2px 8px;
+  border: 2px solid var(--neon-yellow);
+  background: rgba(255, 230, 0, 0.1);
+}
+
+/* 摊牌牌型名 */
+.hand-name {
+  padding: 2px 8px;
+  border: 1px solid var(--neon-yellow);
+  background: rgba(10, 10, 24, 0.8);
+  white-space: nowrap;
+}
+
 /* 玩家底牌区（小尺寸，在座位旁） */
 .hole-cards-row {
   display: flex;
@@ -600,4 +628,52 @@ body {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+/* ============================================================
+   胜负横幅
+   ============================================================ */
+.result-banner-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.result-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 48px;
+  border: 4px solid;
+  background: rgba(10, 10, 24, 0.92);
+  text-align: center;
+}
+
+.result-win {
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 24px var(--neon-yellow), 0 0 60px rgba(255, 230, 0, 0.4);
+}
+
+.result-lose {
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 24px var(--neon-pink), 0 0 60px rgba(255, 45, 117, 0.3);
+}
+
+.result-title {
+  font-size: 28px;
+  letter-spacing: 3px;
+}
+
+.result-amount {
+  font-size: 22px;
+}
+
+.result-hand {
+  font-size: 12px;
+  letter-spacing: 1px;
 }

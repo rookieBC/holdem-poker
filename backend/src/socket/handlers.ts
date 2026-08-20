@@ -241,7 +241,7 @@ export function registerSocketHandlers(io: Server): void {
           }
           io.to(room.id).emit(ServerEvent.GameEvent, {
             type: 'win',
-            data: {},
+            data: { winners: room.gameState.winners ?? [] },
           });
         }
       }
