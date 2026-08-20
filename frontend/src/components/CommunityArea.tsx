@@ -1,4 +1,5 @@
 import { PixelCard } from './PixelCard';
+import { AnimateNumber } from './AnimateNumber';
 import type { GameState } from '@holdem/shared';
 import { GameStage } from '@holdem/shared';
 
@@ -47,9 +48,12 @@ export function CommunityArea({ state }: CommunityAreaProps) {
 
         <div className="pot-display">
           <span className="font-screen text-xs glow-yellow">POT</span>
-          <span className="font-mono text-2xl glow-yellow leading-none">
-            {state.currentPot.toLocaleString()}
-          </span>
+          <AnimateNumber
+            value={state.currentPot}
+            fontSize={24}
+            bumpScale={1.5}
+            className="font-mono glow-yellow leading-none"
+          />
         </div>
 
         {state.currentBet > 0 && (

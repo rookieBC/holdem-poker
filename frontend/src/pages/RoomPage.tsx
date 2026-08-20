@@ -8,6 +8,7 @@ import { useAccountStore } from '../store/account';
 import { useRoomStore } from '../store/room';
 import { useGameStore } from '../store/game';
 import { connect } from '../lib/socket';
+import { useScreenShake } from '../hooks/useScreenShake';
 
 export function RoomPage() {
   const { roomId = '' } = useParams();
@@ -29,6 +30,7 @@ export function RoomPage() {
   } = useRoomStore();
   const subscribeGame = useGameStore((s) => s.subscribe);
   const gameState = useGameStore((s) => s.state);
+  const shakeRef = useScreenShake();
 
   // 拦截未登录 + 订阅推送
   useEffect(() => {
@@ -101,7 +103,7 @@ export function RoomPage() {
         {inGame && activeGameState ? (
           /* 游戏进行中：牌桌占满上方，操作面板在下方独立区域 */
           <>
-            <div className="flex-1 relative min-h-[300px]">
+            <div ref={shakeRef} className="flex-1 relative min-h-[300px]">
               <PokerTable state={activeGameState} myPlayerId={account.id} />
             </div>
             <div className="shrink-0 px-2 pb-2 w-full flex justify-center">

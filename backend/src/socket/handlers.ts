@@ -189,6 +189,11 @@ export function registerSocketHandlers(io: Server): void {
       if (!result.ok) { ack?.({ error: result.reason }); return; }
       ack?.({ ok: true });
       broadcastGameState(io, room, room.id);
+      // 广播发底牌动画事件
+      io.to(room.id).emit(ServerEvent.GameEvent, {
+        type: 'deal-hole',
+        data: {},
+      });
       logger.info(`${acc.username} 发起开局`);
     });
 
@@ -197,17 +202,49 @@ export function registerSocketHandlers(io: Server): void {
       const acc = getAccount(socket);
       const room = getRoom(payload.roomId);
       if (!room || !acc) { ack?.({ error: '无效请求' }); return; }
+      // 记录动作前的阶段，用于判断是否发生阶段切换
+      const prevStage = room.gameState?.stage;
       const result = processAction(room, acc.id, payload.action);
       if (!result.ok) { ack?.({ error: result.reason }); return; }
       ack?.({ ok: true });
 
+      // 按动作类型广播动画事件（弃牌独立标识，其余归为 bet）
       if (room.gameState) {
+        const eventType = payload.action.type === 'fold' ? 'fold' : 'bet';
         io.to(room.id).emit(ServerEvent.GameEvent, {
-          type: 'bet',
+          type: eventType,
           data: { playerId: acc.id, action: payload.action },
         });
       }
       broadcastGameState(io, room, room.id);
+
+      // 仅当阶段真正切换时才广播翻牌/摊牌/胜利动画事件
+      if (result.newStage && result.newStage !== prevStage && room.gameState) {
+        const stage = result.newStage;
+        if (stage === 'flop' || stage === 'turn' || stage === 'river') {
+          io.to(room.id).emit(ServerEvent.GameEvent, {
+            type: 'deal-community',
+            data: { stage, count: stage === 'flop' ? 3 : 1 },
+          });
+        } else if (stage === 'showdown') {
+          io.to(room.id).emit(ServerEvent.GameEvent, {
+            type: 'showdown',
+            data: {},
+          });
+        } else if (stage === 'settled') {
+          // 若 settled 前未经过独立 showdown 阶段（如仅剩一人），先补 showdown 再 win
+          if (prevStage !== 'showdown') {
+            io.to(room.id).emit(ServerEvent.GameEvent, {
+              type: 'showdown',
+              data: {},
+            });
+          }
+          io.to(room.id).emit(ServerEvent.GameEvent, {
+            type: 'win',
+            data: {},
+          });
+        }
+      }
 
       if (result.newStage === 'settled' && room.gameState) {
         syncAccountsAfterSettle(room);
