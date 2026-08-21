@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useReducer } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/game';
 import type { GameState, ActionType } from '@holdem/shared';
 
@@ -32,15 +32,21 @@ let entryId = 0;
 
 /**
  * 操作历史栏：消费 gameEvent，累积显示玩家操作记录。
+ * 用 lastEvent 去重，避免 state 变化导致重复处理。
  */
 export function ActionLog({ state }: ActionLogProps) {
   const lastEvent = useGameStore((s) => s.lastEvent);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [, forceRender] = useReducer((x) => x + 1, 0);
+  const lastProcessedId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!lastEvent) return;
+    // 用事件内容生成唯一 ID 去重，避免 state 变化导致重复处理
+    const eventId = JSON.stringify(lastEvent);
+    if (eventId === lastProcessedId.current) return;
+    lastProcessedId.current = eventId;
+
     const ev = lastEvent as { type: string; data: Record<string, unknown> };
     let entry: LogEntry | null = null;
 

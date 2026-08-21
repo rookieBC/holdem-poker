@@ -717,13 +717,16 @@ body {
    操作历史栏
    ============================================================ */
 .action-log {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
   width: 180px;
-  max-height: 120px;
-  flex-shrink: 0;
+  height: 140px;
+  z-index: 8;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: rgba(10, 10, 24, 0.8);
+  background: rgba(10, 10, 24, 0.85);
   border: 2px solid #252550;
   padding: 6px 8px;
 }
@@ -735,7 +738,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 200px;
+  flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -769,9 +772,7 @@ body {
 .best-five-row {
   display: flex;
   gap: 2px;
-  flex-wrap: wrap;
   justify-content: center;
-  max-width: 200px;
 }
 
 /* 自己的最优5张牌：上三下二排版 */
