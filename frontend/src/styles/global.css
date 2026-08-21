@@ -717,12 +717,9 @@ body {
    操作历史栏
    ============================================================ */
 .action-log {
-  position: absolute;
-  left: 8px;
-  bottom: 8px;
   width: 180px;
-  max-height: 50%;
-  z-index: 8;
+  max-height: 120px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;

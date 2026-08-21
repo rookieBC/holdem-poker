@@ -108,10 +108,11 @@ export function RoomPage() {
           <>
             <div ref={shakeRef} className="flex-1 relative min-h-[300px]">
               <ResultBanner />
-              <ActionLog state={activeGameState} />
               <PokerTable state={activeGameState} myPlayerId={account.id} />
             </div>
-            <div className="shrink-0 px-2 pb-2 w-full flex justify-center">
+            <div className="shrink-0 px-2 pb-2 w-full flex justify-center items-start gap-2">
+              <ActionLog state={activeGameState} />
+              <div className="flex-1 flex justify-center">
               {activeGameState.stage === 'settled' ? (
                 <div className="next-round-panel">
                   <span className="font-screen text-xs text-gray-400">本局结束</span>
@@ -128,6 +129,7 @@ export function RoomPage() {
               ) : (
                 <ActionPanel state={activeGameState} />
               )}
+              </div>
             </div>
           </>
         ) : (
