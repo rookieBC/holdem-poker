@@ -719,9 +719,9 @@ body {
 .action-log {
   position: absolute;
   left: 8px;
-  bottom: 8px;
+  top: 0;
   width: 180px;
-  height: 140px;
+  height: 100%;
   z-index: 8;
   display: flex;
   flex-direction: column;
