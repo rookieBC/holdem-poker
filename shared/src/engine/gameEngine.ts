@@ -2,7 +2,7 @@
 import { GameStage } from '../types';
 import { deepClone } from './clone.js';
 import { createDeck, shuffle, draw } from './cards.js';
-import { evaluateHand, compareHands, findWinners } from './handEvaluator.js';
+import { evaluateHand, compareHands, findWinners, sortBestFive } from './handEvaluator.js';
 import { calculatePots, distributePots } from './pot.js';
 
 // ============================================================
@@ -277,7 +277,7 @@ export function settleShowdown(state: GameState): { state: GameState; winnings: 
       evalsByPlayerId.set(p.id, { eval: evalResult, playerId: p.id });
       // 填充牌型名和最优5张牌供前端摊牌展示
       p.handName = evalResult.name;
-      p.bestFive = evalResult.bestFive;
+      p.bestFive = sortBestFive(evalResult.bestFive, evalResult.rank);
     }
   }
 

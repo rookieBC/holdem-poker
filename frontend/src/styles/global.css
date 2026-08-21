@@ -776,3 +776,21 @@ body {
   justify-content: center;
   max-width: 200px;
 }
+
+/* 自己的最优5张牌：上三下二排版 */
+.best-five-my {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 自己的大牌型名 */
+.hand-name-lg {
+  font-size: 14px;
+  letter-spacing: 2px;
+  padding: 4px 14px;
+  border: 2px solid var(--neon-yellow);
+  background: rgba(255, 230, 0, 0.12);
+  white-space: nowrap;
+}

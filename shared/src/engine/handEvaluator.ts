@@ -192,3 +192,32 @@ export function findWinners(evals: HandEvaluation[]): number[] {
 
 export { HAND_RANK_NAME };
 
+
+/**
+ * 按牌型逻辑排序最优5张牌，让组成牌型的牌排在前面。
+ * - 四条: 4张同点 + 1张散牌
+ * - 葫芦: 3张同点 + 2张同点
+ * - 三条: 3张同点 + 2张散牌(降序)
+ * - 两对: 大对 + 大对 + 小对 + 小对 + 散牌
+ * - 一对: 对子 + 3张散牌(降序)
+ * - 同花/顺子/同花顺/皇家同花顺/高牌: 按点数降序
+ */
+export function sortBestFive(cards: Card[], rank: HandRank): Card[] {
+  const sorted = [...cards].sort((a, b) => b.value - a.value);
+  if (rank === HandRank.FourOfAKind || rank === HandRank.FullHouse ||
+      rank === HandRank.ThreeOfAKind || rank === HandRank.TwoPair ||
+      rank === HandRank.Pair) {
+    // 按点数分组，组内按点数降序，组间按数量降序再按点数降序
+    const groups = new Map<number, Card[]>();
+    for (const c of sorted) {
+      if (!groups.has(c.value)) groups.set(c.value, []);
+      groups.get(c.value)!.push(c);
+    }
+    const groupList = Array.from(groups.values()).sort(
+      (a, b) => b.length - a.length || b[0].value - a[0].value,
+    );
+    return groupList.flat();
+  }
+  // 顺子、同花、高牌等：直接按点数降序
+  return sorted;
+}
