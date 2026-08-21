@@ -10,6 +10,7 @@ import { useGameStore } from '../store/game';
 import { connect } from '../lib/socket';
 import { useScreenShake } from '../hooks/useScreenShake';
 import { ResultBanner } from '../components/ResultBanner';
+import { ActionLog } from '../components/ActionLog';
 
 export function RoomPage() {
   const { roomId = '' } = useParams();
@@ -107,6 +108,7 @@ export function RoomPage() {
           <>
             <div ref={shakeRef} className="flex-1 relative min-h-[300px]">
               <ResultBanner />
+              <ActionLog state={activeGameState} />
               <PokerTable state={activeGameState} myPlayerId={account.id} />
             </div>
             <div className="shrink-0 px-2 pb-2 w-full flex justify-center">

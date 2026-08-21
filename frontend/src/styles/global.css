@@ -712,3 +712,58 @@ body {
 .action-timer-urgent {
   animation: blink 0.5s infinite;
 }
+
+/* ============================================================
+   操作历史栏
+   ============================================================ */
+.action-log {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 180px;
+  max-height: 60%;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(10, 10, 24, 0.8);
+  border: 2px solid #252550;
+  padding: 6px 8px;
+}
+.action-log-title {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 3px;
+}
+.action-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.action-log-entry {
+  padding: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: log-fade-in 0.3s ease;
+}
+@keyframes log-fade-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.action-log-list::-webkit-scrollbar {
+  width: 4px;
+}
+.action-log-list::-webkit-scrollbar-thumb {
+  background: #333366;
+}
+
+/* 实时牌型提示 */
+.hand-hint {
+  padding: 3px 12px;
+  border: 1px solid var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.1);
+  white-space: nowrap;
+}

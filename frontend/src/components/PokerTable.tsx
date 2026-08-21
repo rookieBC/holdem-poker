@@ -83,7 +83,7 @@ export function PokerTable({ state, myPlayerId }: PokerTableProps) {
 
       {/* 公共牌 + 底池（中上部） */}
       <div className="table-content-top">
-        <CommunityArea state={state} />
+        <CommunityArea state={state} myPlayerId={myPlayerId} />
       </div>
     </div>
   );

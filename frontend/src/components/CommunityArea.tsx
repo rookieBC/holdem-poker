@@ -1,10 +1,13 @@
+import { useMemo } from 'react';
 import { PixelCard } from './PixelCard';
 import { AnimateNumber } from './AnimateNumber';
+import { evaluateHand } from '@holdem/shared';
 import type { GameState } from '@holdem/shared';
 import { GameStage } from '@holdem/shared';
 
 interface CommunityAreaProps {
   state: GameState;
+  myPlayerId?: string;
 }
 
 const STAGE_LABEL: Record<GameStage, string> = {
@@ -29,10 +32,27 @@ const STAGE_COLOR: Record<GameStage, string> = {
   [GameStage.Settled]: '#b026ff',
 };
 
-export function CommunityArea({ state }: CommunityAreaProps) {
+export function CommunityArea({ state, myPlayerId }: CommunityAreaProps) {
   const cards = state.communityCards;
   const stageColor = STAGE_COLOR[state.stage];
   const slots = Array.from({ length: 5 }, (_, i) => cards[i] ?? null);
+
+  // 实时牌型辅助提示：用底牌 + 公共牌算最优牌型
+  const handHint = useMemo(() => {
+    if (!myPlayerId) return null;
+    const mySeat = state.seats.find((s) => s.player?.id === myPlayerId);
+    const myPlayer = mySeat?.player;
+    if (!myPlayer || !myPlayer.holeCards || myPlayer.holeCards.length < 2) return null;
+    // 结算阶段用服务端的 handName
+    if (state.stage === GameStage.Showdown || state.stage === GameStage.Settled) {
+      return myPlayer.handName ?? null;
+    }
+    // 游戏中实时计算
+    const allCards = [...myPlayer.holeCards, ...state.communityCards];
+    if (allCards.length < 2) return null;
+    const evalResult = evaluateHand(allCards);
+    return evalResult.name;
+  }, [state, myPlayerId]);
 
   return (
     <div className="community-area">
@@ -62,6 +82,13 @@ export function CommunityArea({ state }: CommunityAreaProps) {
           </span>
         )}
       </div>
+
+      {/* 实时牌型提示 */}
+      {handHint && (
+        <div className="hand-hint font-screen text-[10px] glow-cyan">
+          你的牌型: {handHint}
+        </div>
+      )}
 
       {/* 公共牌 */}
       <div className="flex gap-2 items-center justify-center flex-wrap">
