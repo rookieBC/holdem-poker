@@ -69,28 +69,19 @@ export function SeatSlot({
     <div className="flex flex-col items-center gap-1">
       {/* 摊牌时：展示最优5张牌（bestFive） */}
       {showBestFive ? (
-        isMySeat ? (
-          /* 自己的牌：上三下二排版 */
-          <div className="best-five-my">
-            <div className="best-five-row">
-              {p.bestFive!.slice(0, 3).map((c, i) => (
-                <PixelCard key={'top-' + i} card={c} revealed size="md" highlight={isWinner} />
-              ))}
-            </div>
-            <div className="best-five-row">
-              {p.bestFive!.slice(3, 5).map((c, i) => (
-                <PixelCard key={'bot-' + i} card={c} revealed size="md" highlight={isWinner} />
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* 对手的牌：单行 */
+        /* 所有玩家统一上三下二排版，自己用md大尺寸，对手用sm小尺寸 */
+        <div className="best-five-my">
           <div className="best-five-row">
-            {p.bestFive!.map((c, i) => (
-              <PixelCard key={'opp-' + i} card={c} revealed size="sm" highlight={isWinner} />
+            {p.bestFive!.slice(0, 3).map((c, i) => (
+              <PixelCard key={'top-' + i} card={c} revealed size={isMySeat ? 'md' : 'sm'} highlight={isWinner} />
             ))}
           </div>
-        )
+          <div className="best-five-row">
+            {p.bestFive!.slice(3, 5).map((c, i) => (
+              <PixelCard key={'bot-' + i} card={c} revealed size={isMySeat ? 'md' : 'sm'} highlight={isWinner} />
+            ))}
+          </div>
+        </div>
       ) : (
         /* 非摊牌：正常显示底牌 */
         showHoleCards && p.holeCards && p.holeCards.length > 0 ? (
