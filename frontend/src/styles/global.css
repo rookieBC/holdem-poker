@@ -767,3 +767,12 @@ body {
   background: rgba(0, 240, 255, 0.1);
   white-space: nowrap;
 }
+
+/* 最优5张牌展示区 */
+.best-five-row {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 200px;
+}

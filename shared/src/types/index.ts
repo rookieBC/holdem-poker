@@ -86,6 +86,8 @@ export interface PublicPlayer {
   lastAction?: PlayerAction | null;
   /** 摊牌时的牌型名（仅 showdown/settled 阶段有值） */
   handName?: string | null;
+  /** 摊牌时组成牌型的最优5张牌（仅 showdown/settled 阶段有值） */
+  bestFive?: Card[] | null;
 }
 
 // ---- 底池 ----

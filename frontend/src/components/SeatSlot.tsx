@@ -13,13 +13,9 @@ interface SeatSlotProps {
   isDealer: boolean;
   isSmallBlind: boolean;
   isBigBlind: boolean;
-  /** 自己的座位：底牌用大尺寸，放在信息卡正上方 */
   isMySeat?: boolean;
-  /** 该玩家是否为本局赢家 */
   isWinner?: boolean;
-  /** 赢得的筹码（isWinner 时有值） */
   winAmount?: number;
-  /** 行动截止时间戳（仅当前行动玩家有值） */
   actionDeadline?: number | null;
 }
 
@@ -57,6 +53,8 @@ export function SeatSlot({
   const isMe = p.id === myPlayerId;
   const isShowdown = stage === GameStage.Showdown || stage === GameStage.Settled;
   const showHoleCards = isMe || (isShowdown && !p.hasFolded);
+  // 摊牌且有 bestFive 时，展示最优5张牌而非原始底牌
+  const showBestFive = isShowdown && !p.hasFolded && p.bestFive && p.bestFive.length === 5;
 
   const cardClass =
     'player-card ' +
@@ -65,21 +63,35 @@ export function SeatSlot({
     (p.isAllIn ? 'is-allin ' : '') +
     (isWinner ? 'is-winner ' : '');
 
-  // 自己的底牌用大尺寸(md)，对手用小尺寸(sm)
   const holeCardSize = isMySeat ? 'md' : 'sm';
 
   return (
     <div className="flex flex-col items-center gap-1">
-      {/* 底牌：在信息卡正上方，自己用大尺寸 */}
-      {showHoleCards && p.holeCards && p.holeCards.length > 0 ? (
-        <div className="hole-cards-row">
-          {p.holeCards.map((c) => (
-            <PixelCard key={c.id} card={c} revealed={showHoleCards} size={holeCardSize} highlight={isWinner} />
+      {/* 摊牌时：展示最优5张牌（bestFive） */}
+      {showBestFive ? (
+        <div className="best-five-row">
+          {p.bestFive!.map((c, i) => (
+            <PixelCard
+              key={c.id + '-' + i}
+              card={c}
+              revealed
+              size={isMySeat ? 'md' : 'sm'}
+              highlight={isWinner}
+            />
           ))}
         </div>
-      ) : null}
+      ) : (
+        /* 非摊牌：正常显示底牌 */
+        showHoleCards && p.holeCards && p.holeCards.length > 0 ? (
+          <div className="hole-cards-row">
+            {p.holeCards.map((c) => (
+              <PixelCard key={c.id} card={c} revealed={showHoleCards} size={holeCardSize} />
+            ))}
+          </div>
+        ) : null
+      )}
 
-      {/* 摊牌时显示牌型名 */}
+      {/* 牌型名 */}
       {isShowdown && !p.hasFolded && p.handName && (
         <span className="hand-name font-screen text-[9px] glow-yellow">{p.handName}</span>
       )}
@@ -98,7 +110,6 @@ export function SeatSlot({
         </span>
 
         {isWinner ? (
-          /* 赢家：筹码用跳动数字 + WIN 金色标签 */
           <>
             <AnimateNumber value={p.chips} fontSize={18} bumpScale={1.6} className="font-mono text-neon-yellow leading-none" />
             <motion.span
@@ -117,21 +128,18 @@ export function SeatSlot({
         )}
 
         {p.isAllIn ? (
-          /* all-in 只显示一个简洁标签，不重复堆叠 */
           <span className="font-screen text-[9px] text-neon-pink blink">梭哈 {p.totalCommitted}</span>
         ) : (
           <>
             {p.betThisRound > 0 && (
               <span className="bet-chip">▲ {p.betThisRound}</span>
             )}
-
             {p.lastAction && (
               <span className="action-tag" style={{ color: actionColor(p.lastAction.type) }}>
                 {ACTION_LABEL[p.lastAction.type]}
                 {p.lastAction.amount ? ' ' + p.lastAction.amount : ''}
               </span>
             )}
-
             {p.hasFolded && <span className="font-screen text-[9px] text-neon-red">弃牌</span>}
             {isActive && actionDeadline && (
               <ActionTimer deadline={actionDeadline} size={44} />

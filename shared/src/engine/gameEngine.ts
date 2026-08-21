@@ -275,8 +275,9 @@ export function settleShowdown(state: GameState): { state: GameState; winnings: 
       const cards = [...p.holeCards, ...s.communityCards];
       const evalResult = evaluateHand(cards);
       evalsByPlayerId.set(p.id, { eval: evalResult, playerId: p.id });
-      // 填充牌型名供前端摊牌展示
+      // 填充牌型名和最优5张牌供前端摊牌展示
       p.handName = evalResult.name;
+      p.bestFive = evalResult.bestFive;
     }
   }
 
