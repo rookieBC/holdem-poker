@@ -36,23 +36,19 @@ export function CommunityArea({ state, myPlayerId }: CommunityAreaProps) {
   const cards = state.communityCards;
   const stageColor = STAGE_COLOR[state.stage];
   const slots = Array.from({ length: 5 }, (_, i) => cards[i] ?? null);
+  const isShowdown = state.stage === GameStage.Showdown || state.stage === GameStage.Settled;
 
-  // 实时牌型辅助提示：用底牌 + 公共牌算最优牌型
+  // 实时牌型辅助提示
   const handHint = useMemo(() => {
     if (!myPlayerId) return null;
     const mySeat = state.seats.find((s) => s.player?.id === myPlayerId);
     const myPlayer = mySeat?.player;
     if (!myPlayer || !myPlayer.holeCards || myPlayer.holeCards.length < 2) return null;
-    // 结算阶段用服务端的 handName
-    if (state.stage === GameStage.Showdown || state.stage === GameStage.Settled) {
-      return myPlayer.handName ?? null;
-    }
-    // 游戏中实时计算
+    if (isShowdown) return myPlayer.handName ?? null;
     const allCards = [...myPlayer.holeCards, ...state.communityCards];
     if (allCards.length < 2) return null;
-    const evalResult = evaluateHand(allCards);
-    return evalResult.name;
-  }, [state, myPlayerId]);
+    return evaluateHand(allCards).name;
+  }, [state, myPlayerId, isShowdown]);
 
   return (
     <div className="community-area">
@@ -76,34 +72,36 @@ export function CommunityArea({ state, myPlayerId }: CommunityAreaProps) {
           />
         </div>
 
-        {state.currentBet > 0 && (
+        {!isShowdown && state.currentBet > 0 && (
           <span className="font-screen text-[10px] text-neon-cyan">
             当前注 {state.currentBet}
           </span>
         )}
       </div>
 
-      {/* 实时牌型提示 */}
-      {handHint && (
+      {/* 实时牌型提示（仅非结算阶段） */}
+      {handHint && !isShowdown && (
         <div className="hand-hint font-screen text-[10px] glow-cyan">
           你的牌型: {handHint}
         </div>
       )}
 
-      {/* 公共牌 */}
-      <div className="flex gap-2 items-center justify-center flex-wrap">
-        {slots.map((c, i) =>
-          c ? (
-            <PixelCard key={c.id} card={c} revealed size="md" />
-          ) : (
-            <div
-              key={i}
-              className="border-2 border-dashed border-neon-cyan/20 rounded-sm"
-              style={{ width: 80, height: 114, opacity: 0.3 }}
-            />
-          ),
-        )}
-      </div>
+      {/* 公共牌（结算时隐藏，结算信息由座位上的 bestFive 展示） */}
+      {!isShowdown && (
+        <div className="flex gap-2 items-center justify-center flex-wrap">
+          {slots.map((c, i) =>
+            c ? (
+              <PixelCard key={c.id} card={c} revealed size="md" />
+            ) : (
+              <div
+                key={i}
+                className="border-2 border-dashed border-neon-cyan/20 rounded-sm"
+                style={{ width: 80, height: 114, opacity: 0.3 }}
+              />
+            ),
+          )}
+        </div>
+      )}
     </div>
   );
 }
